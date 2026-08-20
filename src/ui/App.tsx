@@ -154,6 +154,7 @@ export function App() {
       setThinking(false)
       if (gift < 0) gift = state.pool[0] ?? -1
       if (gift >= 0) {
+        pendingPass.current = slotEls.current.get(gift)?.getBoundingClientRect() ?? null
         play('select')
         commitSelect(gift)
       }
@@ -295,10 +296,7 @@ export function App() {
     }
     return {
       actor: names[state.turn],
-      action:
-        phase === 'place'
-          ? 'place this piece'
-          : `choose ${possessives[opponent]} piece`.replace('choose your piece', 'choose a piece'),
+      action: phase === 'place' ? 'place this piece' : `choose ${possessives[opponent]} piece`,
     }
   }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, possessives, opponent])
 

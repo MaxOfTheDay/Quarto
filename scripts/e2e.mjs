@@ -13,7 +13,9 @@
 import { preview } from 'vite'
 import { chromium } from 'playwright'
 
-const server = await preview({ preview: { port: 4173, strictPort: true } })
+// No strictPort: a preview server the developer already has running should not
+// make the checks fail with a port-in-use error.
+const server = await preview({ preview: { port: 4173 } })
 const URL = server.resolvedUrls.local[0]
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH
 const browser = await chromium.launch(executablePath ? { executablePath } : {})
