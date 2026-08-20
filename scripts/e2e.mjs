@@ -285,6 +285,44 @@ for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
   await ctx.close()
 }
 
+// ── Nothing may move underfoot between the two phases ───────────────────────
+// Anything whose height depends on the phase pushes the board and the pool
+// around on every half-move, which reads as the whole screen reformatting.
+for (const [width, height] of [[390, 844], [1280, 900], [844, 390]]) {
+  const ctx = await browser.newContext({ viewport: { width, height } })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('radio', { name: 'Two players', exact: true }).click()
+  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(400)
+
+  // Document-relative, so a scroll is not mistaken for a layout shift.
+  const anchors = () =>
+    p.evaluate(() => ({
+      board: Math.round(document.querySelector('.board__slab').getBoundingClientRect().top + window.scrollY),
+      pool: Math.round(document.querySelector('.pool').getBoundingClientRect().top + window.scrollY),
+    }))
+
+  const start = await anchors()
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(700)
+  const afterChoose = await anchors()
+  await p.locator('[data-cell="5"]').click()
+  await p.waitForTimeout(700)
+  const afterPlace = await anchors()
+
+  const moved = Math.max(
+    Math.abs(start.board - afterChoose.board),
+    Math.abs(afterChoose.board - afterPlace.board),
+    Math.abs(start.pool - afterChoose.pool),
+    Math.abs(afterChoose.pool - afterPlace.pool),
+  )
+  check(`${width}x${height}: board and pool hold still across a turn`, moved === 0, `moved ${moved}px`)
+  await ctx.close()
+}
+
 // ── Horizontal overflow at common widths ────────────────────────────────────
 for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 } })

@@ -90,6 +90,21 @@ await page.evaluate(() => document.fonts.ready)
 
 const swInfo = await page.evaluate(async () => {
   const registration = await navigator.serviceWorker.ready
+  // `ready` resolves as soon as there is an active worker, which may still be
+  // in `activating`; wait for it to finish before reporting its state.
+  const worker = registration.active
+  if (worker && worker.state === 'activating') {
+    await new Promise((resolve) => {
+      const done = () => {
+        if (worker.state === 'activated') {
+          worker.removeEventListener('statechange', done)
+          resolve()
+        }
+      }
+      worker.addEventListener('statechange', done)
+      done()
+    })
+  }
   return {
     scope: registration.scope,
     state: registration.active?.state ?? null,

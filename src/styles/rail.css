@@ -187,15 +187,9 @@
   transition: border-color var(--dur) var(--ease-out);
 }
 
-/* The shelf closes smoothly while its owner is choosing, but snaps open the
-   instant a piece is on its way: the flight measures where the piece will land,
-   and an animating height would move that target out from under it. */
-.tray[data-empty='true'] .tray__shelf {
-  height: 46px;
-  transition:
-    height var(--dur-slow) var(--ease-settle),
-    border-color var(--dur) var(--ease-out);
-}
+/* The shelf keeps its height whether or not it holds a piece. It used to
+   collapse while its owner was choosing, which looked considered and shifted
+   the board and the pool by that much on every single half-move. */
 
 .tray[data-armed='true'] .tray__shelf {
   border-bottom-color: var(--accent);
@@ -365,6 +359,7 @@
   pointer-events: none;
   transition:
     transform var(--dur) var(--ease-settle),
+    opacity var(--dur) var(--ease-out),
     filter var(--dur) var(--ease-out);
 }
 
@@ -514,7 +509,8 @@
 
   .stage__status {
     align-items: baseline;
-    padding-bottom: 12px;
+    padding-bottom: 11px;
+    gap: 7px 20px;
   }
 
   .stage__status-end {
@@ -555,15 +551,13 @@
     justify-content: center;
   }
 
-  .tray[data-empty='true'] .tray__shelf {
-    height: 42px;
-  }
-
   /* Tightened so the longest reading — short, light, square, hollow — stays on
      one line; wrapping orphans a leading separator and looks broken. */
+  /* Keeps its line whether or not there is a piece to describe, so the label
+     above it does not move between phases. */
   .tray__attrs {
     grid-area: attrs;
-    min-height: 0;
+    min-height: 15px;
     flex-wrap: nowrap;
     font-size: 10px;
     letter-spacing: 0.11em;
@@ -591,12 +585,6 @@
     margin-bottom: 3px;
   }
 
-  /* Nothing to describe while the shelf is empty, and the row is worth more as
-     height than as a placeholder. */
-  .tray[data-empty='true'] .tray__attrs {
-    display: none;
-  }
-
   /* Eight across, two down. A 4x4 pool is about 360px tall on a phone, which is
      the whole reason the board and the pool could not share a screen — and
      needing both in view at once is exactly what choosing a piece requires.
@@ -605,8 +593,10 @@
     grid-template-columns: repeat(8, 1fr);
   }
 
+  /* Slot height past this point buys nothing: the piece is limited by the
+     column width, not by how tall its cell is. */
   .slot {
-    aspect-ratio: 0.74;
+    aspect-ratio: 0.82;
   }
 
   .slot__piece {
@@ -684,10 +674,6 @@
 
   .tray__shelf {
     height: 86px;
-  }
-
-  .tray[data-empty='true'] .tray__shelf {
-    height: 38px;
   }
 
   .tray__piece {
