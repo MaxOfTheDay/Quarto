@@ -16,8 +16,13 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const BASE = '/Quarto/'
 const PORT = 4321
+
+// Read the base out of the build rather than assuming one, so this also covers
+// a renamed repository or a user site served from the domain root.
+const builtHtml = await readFile(join(root, 'dist/index.html'), 'utf8')
+const BASE = builtHtml.match(/<link rel="manifest" href="([^"]*)manifest\.webmanifest"/)?.[1] || '/'
+console.log(`serving dist/ under ${BASE}\n`)
 
 const failures = []
 const check = (ok, message, detail = '') => {
