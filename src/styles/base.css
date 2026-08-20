@@ -8,14 +8,14 @@
 
   --ink: #1f1a15;
   --ink-2: #554c41;
-  --ink-3: #8b8071;
+  --ink-3: #6a6053;
   --hairline: rgba(31, 26, 21, 0.13);
   --hairline-strong: rgba(31, 26, 21, 0.24);
 
   /* One accent, used only for "it is your move on this thing". */
-  --accent: #b84d28;
+  --accent: #ab4523;
   --accent-warm: #d9663a;
-  --accent-lift: rgba(184, 77, 40, 0.12);
+  --accent-lift: rgba(171, 69, 35, 0.12);
 
   /* Smoked oak slab — held dark and low in chroma so the pieces carry the eye. */
   --wood-hi: #443729;
@@ -298,6 +298,13 @@ svg {
     calc(var(--safe-r) + 24px)
     calc(var(--safe-b) + 24px)
     calc(var(--safe-l) + 24px);
+}
+
+.app__shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .topbar {

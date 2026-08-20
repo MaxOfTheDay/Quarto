@@ -70,9 +70,15 @@ function knock(ac: AudioContext, { at = 0, dur = 0.09, peak = 0.22, cutoff = 160
 }
 
 let enabled = true
+
+/**
+ * Never opens the audio graph on its own — the first `play` does that, and
+ * every cue follows a click or a keypress, so the context is always created
+ * inside a user gesture rather than sitting suspended from page load.
+ */
 export const setSoundEnabled = (on: boolean) => {
   enabled = on
-  if (on) ensure()
+  if (on && ctx?.state === 'suspended') void ctx.resume()
 }
 
 export function play(cue: Cue) {

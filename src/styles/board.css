@@ -106,7 +106,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 12%;
+  width: 10%;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--accent-warm);
@@ -122,14 +122,14 @@
 }
 
 .cell[data-target] .cell__target {
-  opacity: 0.32;
+  opacity: 0.75;
   transform: translate(-50%, -50%) scale(1);
 }
 
 .cell[data-target]:hover .cell__target,
 .cell[data-target]:focus-visible .cell__target {
-  opacity: 0.9;
-  transform: translate(-50%, -50%) scale(1.5);
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.7);
 }
 
 .cell[data-target]:hover .cell__socket,

@@ -1,4 +1,4 @@
-import { ATTRIBUTE_MASKS, type PieceId } from './pieces'
+import type { PieceId } from './pieces'
 
 export const SIZE = 4
 export const CELLS = SIZE * SIZE
@@ -23,9 +23,6 @@ export const LINES_THROUGH: readonly (readonly number[])[] = (() => {
   LINES.forEach((line, i) => line.forEach((cell) => out[cell].push(i)))
   return out
 })()
-
-/** Cells on a diagonal touch three lines; they are worth more, all else equal. */
-export const CELL_WEIGHT: readonly number[] = LINES_THROUGH.map((l) => l.length)
 
 export type Board = readonly (PieceId | null)[]
 
@@ -118,5 +115,3 @@ export function liveThreats(board: Board): number[] {
   }
   return out
 }
-
-export { ATTRIBUTE_MASKS }

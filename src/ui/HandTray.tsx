@@ -25,7 +25,12 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
   const attributes = piece === null ? [] : describePiece(piece).split(' ')
 
   return (
-    <section className="tray" data-armed={armed ? 'true' : undefined} aria-label={description}>
+    <section
+      className="tray"
+      data-armed={armed ? 'true' : undefined}
+      data-empty={piece === null ? 'true' : undefined}
+      aria-label={description}
+    >
       <p className="eyebrow tray__label" data-accent={armed ? 'true' : undefined}>
         {label}
       </p>
@@ -41,9 +46,9 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
       </div>
 
       <p className="tray__attrs" aria-hidden="true">
-        {attributes.length > 0
-          ? attributes.map((attribute) => <span key={attribute}>{attribute}</span>)
-          : <span className="tray__attrs-empty">waiting</span>}
+        {attributes.map((attribute) => (
+          <span key={attribute}>{attribute}</span>
+        ))}
       </p>
     </section>
   )

@@ -8,13 +8,10 @@ export interface BoardProps {
   placing: boolean
   lastPlaced: number | null
   win: WinLine | null
-  /** Cell whose piece is mid-flight and should not be painted yet. */
-  hiddenCell: number | null
   onPlace: (cell: number) => void
-  cellRef: (cell: number, el: HTMLElement | null) => void
 }
 
-export function Board({ board, placing, lastPlaced, win, hiddenCell, onPlace, cellRef }: BoardProps) {
+export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) {
   const [cursor, setCursor] = useState(0)
   const gridRef = useRef<HTMLDivElement>(null)
   const winCells = win ? win.cells : null
@@ -109,10 +106,8 @@ export function Board({ board, placing, lastPlaced, win, hiddenCell, onPlace, ce
                       <span className="cell__target" aria-hidden="true" />
                       {piece !== null && (
                         <span
-                          ref={(el) => cellRef(cell, el)}
                           className="cell__piece"
                           data-drop={cell === lastPlaced ? 'true' : undefined}
-                          data-hidden={cell === hiddenCell ? 'true' : undefined}
                           key={piece}
                         >
                           <PieceGlyph piece={piece} className="piece" />

@@ -9,7 +9,6 @@ export interface ModalProps {
   children: ReactNode
   /** Extra class for width and rhythm variations. */
   variant?: string
-  labelledBy?: string
 }
 
 /** A focus-trapping dialog: Escape closes, Tab cycles, focus returns on close. */

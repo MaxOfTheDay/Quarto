@@ -173,7 +173,14 @@
   justify-content: center;
   height: 116px;
   border-bottom: 1px solid var(--hairline-strong);
-  transition: border-color var(--dur) var(--ease-out);
+  transition:
+    height var(--dur-slow) var(--ease-settle),
+    border-color var(--dur) var(--ease-out);
+}
+
+/* The shelf closes while its owner is choosing, and opens as a piece arrives. */
+.tray[data-empty='true'] .tray__shelf {
+  height: 46px;
 }
 
 .tray[data-armed='true'] .tray__shelf {
@@ -190,7 +197,7 @@
   height: 30px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(184, 77, 40, 0.24), transparent);
+  background: radial-gradient(closest-side, rgba(171, 69, 35, 0.24), transparent);
   opacity: 0;
   transition: opacity var(--dur-slow) var(--ease-out);
   pointer-events: none;
@@ -234,12 +241,12 @@
 
 /* An empty shelf shows the socket the next piece will occupy. */
 .tray__socket {
-  width: 64px;
-  height: 22px;
-  margin-bottom: 3px;
+  width: 48px;
+  height: 17px;
+  margin-bottom: 4px;
   border-radius: 50%;
   border: 1px dashed var(--hairline-strong);
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 /* The four attributes in words — piece properties never rest on colour alone. */
@@ -253,6 +260,7 @@
   text-transform: uppercase;
   color: var(--ink-2);
   min-height: 16px;
+  transition: opacity var(--dur) var(--ease-out);
 }
 
 .tray__attrs span + span::before {
@@ -505,6 +513,10 @@
     justify-content: flex-start;
   }
 
+  .tray[data-empty='true'] .tray__shelf {
+    height: 38px;
+  }
+
   .tray__shelf::after {
     left: 46px;
     width: 104px;
@@ -517,9 +529,9 @@
   }
 
   .tray__socket {
-    width: 46px;
-    height: 16px;
-    margin-left: 12px;
+    width: 42px;
+    height: 15px;
+    margin-left: 10px;
   }
 
   .board-foot {

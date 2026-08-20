@@ -9,8 +9,6 @@ export interface PoolProps {
   pool: readonly PieceId[]
   /** True while the local player is choosing their opponent's piece. */
   selecting: boolean
-  /** Piece mid-flight to the tray; its slot stays empty until it lands. */
-  leaving: PieceId | null
   onSelect: (piece: PieceId) => void
   slotRef: (piece: PieceId, el: HTMLElement | null) => void
 }
@@ -20,7 +18,7 @@ export interface PoolProps {
  * (light round, light square, dark round, dark square). It drains as the
  * board fills, so what is left is legible at a glance.
  */
-export function Pool({ pool, selecting, leaving, onSelect, slotRef }: PoolProps) {
+export function Pool({ pool, selecting, onSelect, slotRef }: PoolProps) {
   const [cursor, setCursor] = useState(POOL_ORDER[0])
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -60,7 +58,6 @@ export function Pool({ pool, selecting, leaving, onSelect, slotRef }: PoolProps)
     >
       {POOL_ORDER.map((piece) => {
         const available = pool.includes(piece)
-        const inFlight = piece === leaving
         const enabled = selecting && available
 
         return (
@@ -80,11 +77,7 @@ export function Pool({ pool, selecting, leaving, onSelect, slotRef }: PoolProps)
           >
             <span className="slot__well" aria-hidden="true" />
             {available && (
-              <span
-                ref={(el) => slotRef(piece, el)}
-                className="slot__piece"
-                data-hidden={inFlight ? 'true' : undefined}
-              >
+              <span ref={(el) => slotRef(piece, el)} className="slot__piece">
                 <PieceGlyph piece={piece} className="piece" />
               </span>
             )}

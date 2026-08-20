@@ -149,20 +149,20 @@ export function PieceDefs() {
 
         {/* Blackened steel */}
         <linearGradient id="pg-body-d" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5c646b" />
-          <stop offset="28%" stopColor="#3e454b" />
-          <stop offset="64%" stopColor="#232a2e" />
-          <stop offset="100%" stopColor="#0f1316" />
+          <stop offset="0%" stopColor="#6a727a" />
+          <stop offset="28%" stopColor="#4a525a" />
+          <stop offset="64%" stopColor="#2b3238" />
+          <stop offset="100%" stopColor="#12161a" />
         </linearGradient>
         <linearGradient id="pg-top-d" x1="0.14" y1="0" x2="0.82" y2="1">
-          <stop offset="0%" stopColor="#818a92" />
-          <stop offset="52%" stopColor="#5f676e" />
-          <stop offset="100%" stopColor="#3f464c" />
+          <stop offset="0%" stopColor="#949ca4" />
+          <stop offset="52%" stopColor="#767e86" />
+          <stop offset="100%" stopColor="#545c63" />
         </linearGradient>
         <linearGradient id="pg-well-d" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#525a61" />
-          <stop offset="45%" stopColor="#2b3237" />
-          <stop offset="100%" stopColor="#12161a" />
+          <stop offset="0%" stopColor="#5e666d" />
+          <stop offset="45%" stopColor="#333a40" />
+          <stop offset="100%" stopColor="#171b1f" />
         </linearGradient>
 
         {/* A curved highlight says cylinder; a flat one says prism. */}

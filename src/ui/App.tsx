@@ -8,6 +8,7 @@ import {
   placePiece,
   selectPiece,
   type GameState,
+  type Phase,
   type PieceId,
   type PlayerId,
 } from '../game'
@@ -58,7 +59,6 @@ export function App() {
   const plannedGift = useRef<number>(-1)
   const trayRef = useRef<HTMLSpanElement>(null)
   const slotEls = useRef(new Map<PieceId, HTMLElement>())
-  const cellEls = useRef(new Map<number, HTMLElement>())
   const pendingPass = useRef<DOMRect | null>(null)
   const trayAreaRef = useRef<HTMLDivElement>(null)
   const poolAreaRef = useRef<HTMLDivElement>(null)
@@ -134,7 +134,9 @@ export function App() {
         setThinking(false)
         plannedGift.current = move.gift
         play('place')
-        commitPlace(move.cell)
+        // The search always returns a legal cell; falling back to the first
+        // empty one means a surprise can never leave the game stuck mid-turn.
+        commitPlace(move.cell >= 0 ? move.cell : state.board.findIndex((c) => c === null))
         return
       }
 
@@ -150,6 +152,7 @@ export function App() {
       await sleep(PASS_DELAY)
       if (cancelled) return
       setThinking(false)
+      if (gift < 0) gift = state.pool[0] ?? -1
       if (gift >= 0) {
         play('select')
         commitSelect(gift)
@@ -175,12 +178,15 @@ export function App() {
   /* ── Following the turn on a small screen ─────────────────────────────── */
 
   const compact = useMediaQuery('(max-width: 900px)')
-  const lastPhase = useRef(phase)
+  // null means "not positioned yet", so the opening turn scrolls too — a game
+  // starts in the choosing phase with the pool below the fold.
+  const lastPhase = useRef<Phase | null>(null)
 
   useEffect(() => {
+    if (!compact || showSetup || !localTurn) return
     const changed = lastPhase.current !== phase
     lastPhase.current = phase
-    if (!changed || !compact || showSetup || !localTurn) return
+    if (!changed) return
     // Stacked on a phone, the piece pool and the board cannot both be in view;
     // move to whichever one the player now has to act on.
     const target = phase === 'select' ? poolAreaRef.current : trayAreaRef.current
@@ -207,9 +213,10 @@ export function App() {
       difficulty: prefs.difficulty,
       human: vsComputer ? 0 : null,
       names: vsComputer ? ['You', 'Computer'] : ['Player 1', 'Player 2'],
-      possessives: vsComputer ? ['your', "the computer's"] : ["Player 1's", "Player 2's"],
+      possessives: vsComputer ? ['your', 'the computer\u2019s'] : ['Player 1\u2019s', 'Player 2\u2019s'],
     })
     plannedGift.current = -1
+    lastPhase.current = null
     setThinking(false)
     setHistory([createGame(opener)])
     setShowSetup(false)
@@ -218,6 +225,7 @@ export function App() {
 
   const rematch = useCallback(() => {
     plannedGift.current = -1
+    lastPhase.current = null
     setThinking(false)
     setHistory([createGame(resolveOpener(prefs.opener))])
   }, [prefs.opener])
@@ -273,7 +281,7 @@ export function App() {
   /* ── Copy ─────────────────────────────────────────────────────────────── */
 
   const names = session?.names ?? ['Player 1', 'Player 2']
-  const possessives = session?.possessives ?? ["Player 1's", "Player 2's"]
+  const possessives = session?.possessives ?? ['Player 1\u2019s', 'Player 2\u2019s']
   const opponent = otherPlayer(state.turn)
 
   const status = useMemo(() => {
@@ -312,10 +320,16 @@ export function App() {
         ? `Vs computer · ${session.difficulty[0].toUpperCase()}${session.difficulty.slice(1)}`
         : 'Two players'
 
+  // While the setup screen covers the game, `inert` keeps everything behind it
+  // out of the tab order and the accessibility tree — aria-hidden alone would
+  // still let a keyboard reach the controls.
+  const covered = showSetup ? ({ inert: '' } as const) : {}
+
   return (
     <div className="app">
       <PieceDefs />
 
+      <div className="app__shell" {...covered}>
       <header className="topbar">
         <div className="topbar__left">
           <span className="wordmark">Quarto</span>
@@ -328,6 +342,7 @@ export function App() {
           <button
             type="button"
             className="btn btn--quiet"
+            aria-label="Sound"
             aria-pressed={prefs.sound}
             onClick={() => setPrefs({ sound: !prefs.sound })}
           >
@@ -343,11 +358,7 @@ export function App() {
         {announcement}
       </p>
 
-      <main
-        className="stage"
-        data-over={state.outcome ? 'true' : undefined}
-        aria-hidden={showSetup ? 'true' : undefined}
-      >
+      <main className="stage" data-over={state.outcome ? 'true' : undefined}>
         <div className="stage__status">
           <p className="status" data-live={localTurn ? 'true' : undefined}>
             <span className="status__actor">{status.actor}</span>
@@ -391,12 +402,7 @@ export function App() {
             placing={localTurn && phase === 'place'}
             lastPlaced={state.lastPlaced}
             win={state.outcome?.kind === 'win' ? state.outcome.line : null}
-            hiddenCell={null}
             onPlace={onPlace}
-            cellRef={(cell, el) => {
-              if (el) cellEls.current.set(cell, el)
-              else cellEls.current.delete(cell)
-            }}
           />
           <div className="board-foot">
             <button type="button" className="btn btn--quiet" onClick={undo} disabled={!canUndo}>
@@ -418,14 +424,13 @@ export function App() {
             <section className="rail-section">
               <div className="rail-section__head">
                 <p className="eyebrow" data-accent={localTurn && phase === 'select' ? 'true' : undefined}>
-                  {localTurn && phase === 'select' ? `Choose ${possessives[opponent]} piece` : 'Remaining'}
+                  {localTurn && phase === 'select' ? 'Hand one over' : 'Remaining'}
                 </p>
                 <p className="eyebrow rail-section__count">{state.pool.length}</p>
               </div>
               <Pool
                 pool={state.pool}
                 selecting={localTurn && phase === 'select'}
-                leaving={null}
                 onSelect={onSelect}
                 slotRef={(piece, el) => {
                   if (el) slotEls.current.set(piece, el)
@@ -436,6 +441,8 @@ export function App() {
           )}
         </div>
       </main>
+
+      </div>
 
       {showSetup && (
         <Setup
