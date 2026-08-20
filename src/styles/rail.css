@@ -510,38 +510,100 @@
     font-size: 16px;
   }
 
+  /* The shelf sits beside its label rather than above it: the same information
+     in half the height, which is what lets the placing phase fit too. */
   .tray {
-    gap: 9px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'shelf label'
+      'shelf attrs';
+    align-items: end;
+    column-gap: 16px;
+    row-gap: 3px;
+  }
+
+  .tray__label {
+    grid-area: label;
+    align-self: end;
   }
 
   .tray__shelf {
-    height: 78px;
-    justify-content: flex-start;
+    grid-area: shelf;
+    width: 88px;
+    height: 64px;
+    justify-content: center;
   }
 
   .tray[data-empty='true'] .tray__shelf {
-    height: 38px;
+    height: 42px;
+  }
+
+  /* Tightened so the longest reading — short, light, square, hollow — stays on
+     one line; wrapping orphans a leading separator and looks broken. */
+  .tray__attrs {
+    grid-area: attrs;
+    min-height: 0;
+    flex-wrap: nowrap;
+    font-size: 10px;
+    letter-spacing: 0.11em;
+  }
+
+  .tray__attrs span + span::before {
+    margin: 0 5px;
   }
 
   .tray__shelf::after {
-    left: 46px;
-    width: 104px;
-    height: 22px;
+    left: 50%;
+    width: 84px;
+    height: 20px;
   }
 
   .tray__piece {
-    width: 76px;
-    height: 84px;
+    width: 66px;
+    height: 74px;
   }
 
   .tray__socket {
-    width: 42px;
-    height: 15px;
-    margin-left: 10px;
+    width: 40px;
+    height: 14px;
+    margin-left: 0;
+    margin-bottom: 3px;
   }
 
   .board-foot {
-    margin-top: 10px;
+    margin-top: 8px;
+  }
+
+  .board-foot .btn {
+    height: 28px;
+  }
+
+  /* Nothing to describe while the shelf is empty, and the row is worth more as
+     height than as a placeholder. */
+  .tray[data-empty='true'] .tray__attrs {
+    display: none;
+  }
+
+  /* Eight across, two down. A 4x4 pool is about 360px tall on a phone, which is
+     the whole reason the board and the pool could not share a screen — and
+     needing both in view at once is exactly what choosing a piece requires.
+     The rows still hold together as families: light on top, dark beneath. */
+  .pool {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .slot {
+    aspect-ratio: 0.88;
+  }
+
+  .slot__piece {
+    inset: 5% 2% 4%;
+  }
+
+  .slot__well {
+    width: 26%;
+    bottom: 24%;
   }
 
   .result {

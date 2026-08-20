@@ -192,12 +192,12 @@ export function App() {
     const changed = lastPhase.current !== phase
     lastPhase.current = phase
     if (!changed) return
-    // Stacked on a phone, the piece pool and the board cannot both be in view;
-    // move to whichever one the player now has to act on.
+    // `nearest` does nothing when the target is already on screen, so this only
+    // moves the page on the smallest phones, where the layout cannot quite fit.
     const target = phase === 'select' ? poolAreaRef.current : trayAreaRef.current
     target?.scrollIntoView({
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      block: phase === 'select' ? 'nearest' : 'start',
+      block: 'nearest',
     })
   }, [phase, stacked, showSetup, localTurn])
 

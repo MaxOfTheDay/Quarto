@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { POOL_ORDER, pieceLabel, type PieceId } from '../game'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { PieceGlyph } from './PieceGlyph'
 
-const COLS = 4
+/** Must match the pool's grid in rail.css, or arrow keys move the wrong way. */
+const WIDE_COLUMNS = '(max-width: 900px) and (min-height: 561px), (max-width: 619px)'
 
 export interface PoolProps {
   /** Pieces still available to hand over. */
@@ -21,6 +23,7 @@ export interface PoolProps {
 export function Pool({ pool, selecting, onSelect, slotRef }: PoolProps) {
   const [cursor, setCursor] = useState(POOL_ORDER[0])
   const gridRef = useRef<HTMLDivElement>(null)
+  const columns = useMediaQuery(WIDE_COLUMNS) ? 8 : 4
 
   useEffect(() => {
     if (!selecting || pool.includes(cursor)) return
@@ -39,8 +42,8 @@ export function Pool({ pool, selecting, onSelect, slotRef }: PoolProps) {
     const deltas: Record<string, number> = {
       ArrowLeft: -1,
       ArrowRight: 1,
-      ArrowUp: -COLS,
-      ArrowDown: COLS,
+      ArrowUp: -columns,
+      ArrowDown: columns,
     }
     const delta = deltas[event.key]
     if (delta === undefined) return

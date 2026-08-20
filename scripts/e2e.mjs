@@ -245,6 +245,36 @@ async function begin(p, mode = 'Two players') {
   await ctx.close()
 }
 
+// ── A phone in portrait must not need scrolling to play ─────────────────────
+// Choosing a piece means reading the board and the pool together, so if they
+// cannot share a screen the game becomes a scrolling exercise.
+for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
+  const ctx = await browser.newContext({ viewport: { width, height } })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('radio', { name: 'Two players', exact: true }).click()
+  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(400)
+
+  const overflow = () =>
+    p.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)
+
+  check(`${width}x${height}: choosing fits on one screen`, (await overflow()) <= 0, `${await overflow()}px over`)
+
+  await p.locator('[data-piece="12"]').click() // longest attribute reading
+  await p.waitForTimeout(600)
+  check(`${width}x${height}: placing fits on one screen`, (await overflow()) <= 0, `${await overflow()}px over`)
+
+  const attrs = await p.evaluate(() => {
+    const el = document.querySelector('.tray__attrs')
+    return { height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) || 16 }
+  })
+  check(`${width}x${height}: the piece's attributes stay on one line`, attrs.height <= attrs.line + 2)
+  await ctx.close()
+}
+
 // ── Horizontal overflow at common widths ────────────────────────────────────
 for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 } })
