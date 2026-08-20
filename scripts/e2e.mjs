@@ -187,6 +187,64 @@ async function begin(p, mode = 'Two players') {
   await ctx.close()
 }
 
+// ── A full game against Hard, with the main thread under watch ──────────────
+{
+  const { p, ctx, errors } = await open()
+  await p.getByRole('radio', { name: 'Vs computer', exact: true }).click()
+  await p.getByRole('radio', { name: 'Hard', exact: true }).click()
+  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.waitForSelector('.board__slab')
+
+  // The search runs in a worker, so animation frames should keep arriving even
+  // while the computer is thinking. A blocked main thread shows up as a gap.
+  await p.evaluate(() => {
+    window.__maxGap = 0
+    let last = performance.now()
+    const tick = (t) => {
+      window.__maxGap = Math.max(window.__maxGap, t - last)
+      last = t
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+
+  // Only ever touch controls the UI has actually enabled.
+  const readable = () =>
+    p.evaluate(() => ({
+      over: !!document.querySelector('.result__headline'),
+      headline: document.querySelector('.result__headline')?.textContent ?? null,
+      cells: [...document.querySelectorAll('.cell[data-target="true"]:not([disabled])')].map((el) => el.dataset.cell),
+      slots: [...document.querySelectorAll('.pool[data-active="true"] .slot:not([disabled])')].map((el) => el.dataset.piece),
+    }))
+
+  let finished = null
+  for (let i = 0; i < 400; i++) {
+    const s = await readable()
+    if (s.over) {
+      finished = s.headline
+      break
+    }
+    const cell = s.cells.length ? s.cells[Math.floor(Math.random() * s.cells.length)] : null
+    const slot = s.slots.length ? s.slots[Math.floor(Math.random() * s.slots.length)] : null
+    if (!cell && !slot) {
+      await p.waitForTimeout(120)
+      continue
+    }
+    try {
+      await p.locator(cell ? `[data-cell="${cell}"]` : `[data-piece="${slot}"]`).click({ timeout: 2000 })
+    } catch {
+      // The turn flipped between reading and clicking; look again.
+    }
+    await p.waitForTimeout(110)
+  }
+
+  const maxGap = await p.evaluate(() => window.__maxGap)
+  check('a full game against Hard reaches a result', finished !== null, `ended: ${finished}`)
+  check('the board stays responsive while Hard thinks', maxGap < 250, `longest frame gap ${maxGap.toFixed(0)}ms`)
+  check('no console errors across a full Hard game', errors.length === 0, errors.join('; '))
+  await ctx.close()
+}
+
 // ── Horizontal overflow at common widths ────────────────────────────────────
 for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 } })

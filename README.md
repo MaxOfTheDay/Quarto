@@ -21,7 +21,8 @@ No backend, no analytics, no network calls — fonts are bundled. Preferences
 live in `localStorage`.
 
 There is also a browser suite covering undo, keyboard play, the draw, the
-restart prompt, persistence and horizontal overflow at seven widths. Playwright
+restart prompt, persistence, horizontal overflow at seven widths, and a full
+game against Hard while watching for main-thread stalls. Playwright
 is deliberately not a dependency, since installing it downloads browser
 binaries this game has no other use for:
 
@@ -69,4 +70,6 @@ ahead. `hard` deepens until its time budget or a forced result stops it, and
 runs in a Web Worker so the board keeps responding.
 
 Over 24 games per pairing (`npm run selfplay 24`), hard beat easy 24–0, beat
-medium 17–0 with 7 draws, and drew 18 of 24 against itself.
+medium 17–0 with 7 draws, and drew 18 of 24 against itself. Playing a full game
+against hard in a browser, the longest gap between animation frames was 33 ms —
+the search never touches the main thread.
