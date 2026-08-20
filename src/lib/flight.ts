@@ -41,6 +41,9 @@ export function flyClone(
     transformOrigin: 'top left',
     opacity: '1',
     visibility: 'visible',
+    // The clone would otherwise replay the destination's own arrival keyframes
+    // while it is still in the air.
+    animation: 'none',
   } satisfies Partial<CSSStyleDeclaration>)
   document.body.appendChild(clone)
 

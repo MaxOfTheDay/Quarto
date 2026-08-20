@@ -173,14 +173,17 @@
   justify-content: center;
   height: 116px;
   border-bottom: 1px solid var(--hairline-strong);
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+/* The shelf closes smoothly while its owner is choosing, but snaps open the
+   instant a piece is on its way: the flight measures where the piece will land,
+   and an animating height would move that target out from under it. */
+.tray[data-empty='true'] .tray__shelf {
+  height: 46px;
   transition:
     height var(--dur-slow) var(--ease-settle),
     border-color var(--dur) var(--ease-out);
-}
-
-/* The shelf closes while its owner is choosing, and opens as a piece arrives. */
-.tray[data-empty='true'] .tray__shelf {
-  height: 46px;
 }
 
 .tray[data-armed='true'] .tray__shelf {

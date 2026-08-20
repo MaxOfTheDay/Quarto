@@ -17,7 +17,18 @@ npm test           # domain and AI unit tests
 npm run selfplay   # headless tournament across the difficulty ladder
 ```
 
-No backend. Preferences live in `localStorage`.
+No backend, no analytics, no network calls — fonts are bundled. Preferences
+live in `localStorage`.
+
+There is also a browser suite covering undo, keyboard play, the draw, the
+restart prompt, persistence and horizontal overflow at seven widths. Playwright
+is deliberately not a dependency, since installing it downloads browser
+binaries this game has no other use for:
+
+```bash
+npm i -D playwright && npx playwright install chromium
+npm run test:e2e
+```
 
 ## How it is put together
 
