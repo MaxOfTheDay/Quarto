@@ -4,13 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#E9E3D7" />
+    <meta name="theme-color" content="#e9e3d7" />
     <meta
       name="description"
       content="Quarto — the abstract strategy game where your opponent chooses the piece you play."
     />
     <title>Quarto</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+
+    <!-- iOS has no manifest support for these, so they are declared separately. -->
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Quarto" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   </head>
   <body>
     <div id="root"></div>

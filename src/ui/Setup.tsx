@@ -8,6 +8,8 @@ export interface SetupProps {
   onChange: (patch: Partial<Prefs>) => void
   onStart: () => void
   onRules: () => void
+  /** Offered only while the browser is holding an install prompt for us. */
+  onInstall?: () => void
   /** Only offered once a game exists to go back to. */
   onDismiss?: () => void
 }
@@ -51,7 +53,7 @@ function Segmented<T extends string>({
   )
 }
 
-export function Setup({ prefs, onChange, onStart, onRules, onDismiss }: SetupProps) {
+export function Setup({ prefs, onChange, onStart, onRules, onInstall, onDismiss }: SetupProps) {
   const vsComputer = prefs.mode === 'computer'
 
   const openerOptions: Choice<Opener>[] = vsComputer
@@ -138,6 +140,11 @@ export function Setup({ prefs, onChange, onStart, onRules, onDismiss }: SetupPro
             <button type="button" className="link" onClick={onRules}>
               Full rules
             </button>
+            {onInstall && (
+              <button type="button" className="link" onClick={onInstall}>
+                Install app
+              </button>
+            )}
             {onDismiss && (
               <button type="button" className="link" onClick={onDismiss}>
                 Back to game

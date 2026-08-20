@@ -359,3 +359,31 @@ svg {
     display: none;
   }
 }
+
+/* ── Install and update ──────────────────────────────────────────────────── */
+
+/* A waiting build is worth noticing but not worth interrupting a game for. */
+.topbar__update::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  /* Too little room in the bar; the setup screen carries the install action. */
+  .topbar__install {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar__update {
+    padding: 0 8px;
+  }
+  .topbar__update::before {
+    margin-right: -2px;
+  }
+}

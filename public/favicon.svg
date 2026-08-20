@@ -1,6 +1,106 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#453729"/>
-  <circle cx="16" cy="16" r="10" fill="#2a2016"/>
-  <circle cx="16" cy="15.4" r="9" fill="#f2e7ce"/>
-  <circle cx="16" cy="15.4" r="4.4" fill="#7d6850"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="oak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#443729"/>
+      <stop offset="52%" stop-color="#32281e"/>
+      <stop offset="100%" stop-color="#231b13"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.3" cy="0.02" r="0.9">
+      <stop offset="0%" stop-color="#ffe4bc" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#ffe4bc" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="body-l" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e3"/><stop offset="30%" stop-color="#f2e7ce"/>
+      <stop offset="64%" stop-color="#dfcba5"/><stop offset="100%" stop-color="#b89f79"/>
+    </linearGradient>
+    <linearGradient id="top-l" x1="0.14" y1="0" x2="0.82" y2="1">
+      <stop offset="0%" stop-color="#fffdf7"/><stop offset="52%" stop-color="#f7efdd"/>
+      <stop offset="100%" stop-color="#e2d3b3"/>
+    </linearGradient>
+    <linearGradient id="well-l" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bda787"/><stop offset="45%" stop-color="#816c51"/>
+      <stop offset="100%" stop-color="#544632"/>
+    </linearGradient>
+
+    <linearGradient id="body-d" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6a727a"/><stop offset="28%" stop-color="#4a525a"/>
+      <stop offset="64%" stop-color="#2b3238"/><stop offset="100%" stop-color="#12161a"/>
+    </linearGradient>
+    <linearGradient id="top-d" x1="0.14" y1="0" x2="0.82" y2="1">
+      <stop offset="0%" stop-color="#949ca4"/><stop offset="52%" stop-color="#767e86"/>
+      <stop offset="100%" stop-color="#545c63"/>
+    </linearGradient>
+    <linearGradient id="well-d" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5e666d"/><stop offset="45%" stop-color="#333a40"/>
+      <stop offset="100%" stop-color="#171b1f"/>
+    </linearGradient>
+
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="16%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="33%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="68%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="88%" stop-color="#000000" stop-opacity="0.11"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.26"/>
+    </linearGradient>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="9%" stop-color="#ffffff" stop-opacity="0.13"/>
+      <stop offset="52%" stop-color="#ffffff" stop-opacity="0.01"/>
+      <stop offset="90%" stop-color="#000000" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.24"/>
+    </linearGradient>
+    <radialGradient id="cast" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="55%" stop-color="#000000" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="socket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#221a11"/><stop offset="42%" stop-color="#31261a"/>
+      <stop offset="100%" stop-color="#3b2e1e"/>
+    </linearGradient>
+    <linearGradient id="socketTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.45"/>
+      <stop offset="34%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="64" fill="url(#oak)"/>
+  <rect width="512" height="512" rx="64" fill="url(#lamp)"/>
+  <rect x="58" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
+    <rect x="58" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
+    <rect x="58" y="60.64726" width="189.09" height="189.09" rx="17.0181"
+          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
+  <rect x="264.90999999999997" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
+    <rect x="264.90999999999997" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
+    <rect x="264.90999999999997" y="60.64726" width="189.09" height="189.09" rx="17.0181"
+          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
+  <rect x="58" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
+    <rect x="58" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
+    <rect x="58" y="267.55726" width="189.09" height="189.09" rx="17.0181"
+          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
+  <rect x="264.90999999999997" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
+    <rect x="264.90999999999997" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
+    <rect x="264.90999999999997" y="267.55726" width="189.09" height="189.09" rx="17.0181"
+          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
+
+  <ellipse cx="152.54500000000002" cy="226.342625" rx="74.12328000000001" ry="20.516265" fill="url(#cast)"/>
+  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="url(#body-l)"/>
+  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="url(#sheen)"/>
+  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="none" stroke="#543f24" stroke-opacity="0.34" stroke-width="1.2868625"/>
+  <ellipse cx="152.54500000000002" cy="106.11290000000001" rx="66.1815" ry="22.79585" fill="url(#top-l)"
+                stroke="#543f24" stroke-opacity="0.3" stroke-width="1.2868625"/>
+  <ellipse cx="152.54500000000002" cy="106.11290000000001" rx="33.09075" ry="11.397925" fill="url(#well-l)"/>
+         <path d="M 119.45425000000002 106.11290000000001 A 33.09075 11.397925 0 0 0 185.63575000000003 106.11290000000001" fill="none"
+               stroke="#fffaec" stroke-opacity="0.6" stroke-width="1.4707000000000001"/>
+
+  <ellipse cx="359.455" cy="433.252625" rx="74.12328000000001" ry="20.516265" fill="url(#cast)"/>
+  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="url(#body-d)"/>
+  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="url(#facet)"/>
+  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="none" stroke="#fffcf4" stroke-opacity="0.13" stroke-width="1.2868625"/>
+  <path d="M 293.2735 394.64675 H 425.63649999999996 L 415.70927499999993 349.05505000000005 H 303.20072500000003 Z"
+             fill="url(#top-d)" stroke="#fffcf4" stroke-opacity="0.2"
+             stroke-width="1.2868625" stroke-linejoin="round"/>
+  
 </svg>

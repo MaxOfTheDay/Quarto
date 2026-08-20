@@ -474,7 +474,10 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
-@media (max-width: 900px) {
+/* Stack only when there is height to stack into: portrait phones, and anything
+   narrow enough that two columns will not fit at all. A phone held sideways
+   falls through to the two-column layout below instead. */
+@media (max-width: 900px) and (min-height: 561px), (max-width: 619px) {
   .stage {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -557,9 +560,64 @@
 
 /* With the tray gone, the result takes the whole rail rather than sitting in
    the pool's row with a hole above it. */
-@media (min-width: 901px) {
+@media (min-width: 901px), (max-height: 560px) and (min-width: 620px) {
   .stage[data-over='true'] .stage__pool {
     grid-row: 2 / span 2;
     grid-column: 2;
+  }
+}
+
+/* Short and wide — a phone or small tablet in landscape. The two-column layout
+   applies as it does on a desktop, but every fixed height has to come down or
+   the board is pushed off the bottom of the screen. */
+@media (max-height: 560px) and (min-width: 620px) {
+  .stage {
+    --board-size: clamp(200px, min(44vw, 62vh), 560px);
+    grid-template-columns: var(--board-size) minmax(196px, 262px);
+    gap: 14px clamp(18px, 3vw, 40px);
+  }
+
+  .app {
+    padding-top: calc(var(--safe-t) + 10px);
+    padding-bottom: calc(var(--safe-b) + 14px);
+  }
+
+  .topbar {
+    padding-bottom: 9px;
+    margin-bottom: 14px;
+  }
+
+  .stage__status {
+    padding-bottom: 11px;
+  }
+
+  .status {
+    font-size: 15.5px;
+  }
+
+  .tray__shelf {
+    height: 86px;
+  }
+
+  .tray[data-empty='true'] .tray__shelf {
+    height: 38px;
+  }
+
+  .tray__piece {
+    width: 84px;
+    height: 94px;
+  }
+
+  .tray__shelf::after {
+    width: 108px;
+    height: 22px;
+  }
+
+  .board-foot {
+    margin-top: 8px;
+  }
+
+  .result__headline {
+    font-size: 27px;
   }
 }

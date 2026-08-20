@@ -17,6 +17,7 @@ import type { Difficulty } from '../game/ai'
 import { flyClone, prefersReducedMotion } from '../lib/flight'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { resolveOpener, usePrefs, type Mode } from '../lib/prefs'
+import { usePwa } from '../lib/pwa'
 import { play, setSoundEnabled } from '../lib/sound'
 import { Board } from './Board'
 import { HandTray } from './HandTray'
@@ -51,6 +52,7 @@ export function App() {
   const [confirmRestart, setConfirmRestart] = useState(false)
   const [thinking, setThinking] = useState(false)
   const [trayHidden, setTrayHidden] = useState(false)
+  const { canInstall, updateReady, install, update } = usePwa()
 
   const state = history[history.length - 1]
   const phase = phaseOf(state)
@@ -178,13 +180,15 @@ export function App() {
 
   /* ── Following the turn on a small screen ─────────────────────────────── */
 
-  const compact = useMediaQuery('(max-width: 900px)')
+  // Must match the stacked layout's condition in rail.css: in landscape the
+  // board and pool are side by side, so there is nothing to scroll between.
+  const stacked = useMediaQuery('(max-width: 900px) and (min-height: 561px), (max-width: 619px)')
   // null means "not positioned yet", so the opening turn scrolls too — a game
   // starts in the choosing phase with the pool below the fold.
   const lastPhase = useRef<Phase | null>(null)
 
   useEffect(() => {
-    if (!compact || showSetup || !localTurn) return
+    if (!stacked || showSetup || !localTurn) return
     const changed = lastPhase.current !== phase
     lastPhase.current = phase
     if (!changed) return
@@ -195,7 +199,7 @@ export function App() {
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       block: phase === 'select' ? 'nearest' : 'start',
     })
-  }, [phase, compact, showSetup, localTurn])
+  }, [phase, stacked, showSetup, localTurn])
 
   /* ── Outcome ──────────────────────────────────────────────────────────── */
 
@@ -252,6 +256,15 @@ export function App() {
     plannedGift.current = -1
     play('undo')
   }, [canUndo, session])
+
+  /* ── New builds ───────────────────────────────────────────────────────── */
+
+  useEffect(() => {
+    // On the setup screen there is no position to lose, so a waiting build is
+    // taken silently. Mid-game it waits behind a quiet control instead — which
+    // together means nobody can end up stranded on an old version.
+    if (updateReady && showSetup) update()
+  }, [updateReady, showSetup, update])
 
   /* ── Keyboard ─────────────────────────────────────────────────────────── */
 
@@ -334,6 +347,16 @@ export function App() {
           {modeLabel && <span className="topbar__mode">{modeLabel}</span>}
         </div>
         <div className="topbar__right">
+          {updateReady && !showSetup && (
+            <button type="button" className="btn btn--quiet topbar__update" onClick={update}>
+              Update ready
+            </button>
+          )}
+          {canInstall && (
+            <button type="button" className="btn btn--quiet topbar__install" onClick={install}>
+              Install
+            </button>
+          )}
           <button type="button" className="btn btn--quiet" onClick={() => setShowRules(true)}>
             Rules
           </button>
@@ -448,6 +471,7 @@ export function App() {
           onChange={setPrefs}
           onStart={startGame}
           onRules={() => setShowRules(true)}
+          onInstall={canInstall ? install : undefined}
           onDismiss={session ? () => setShowSetup(false) : undefined}
         />
       )}
