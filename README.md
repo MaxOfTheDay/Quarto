@@ -12,9 +12,13 @@ dark/light, square/round, hollow/solid — wins, no matter who placed them.
 ## Deploying
 
 `.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every
-push to `main`. The one-time setup is **Settings → Pages → Source: GitHub
-Actions** — and the workflow tries to switch that on by itself, so usually
-there is nothing to do. After that, deployment is an ordinary `git push`.
+push to `main`.
+
+**Enable Pages once before the first deploy:** Settings → Pages → Source →
+**GitHub Actions**. A workflow cannot do this for itself — the default
+`GITHUB_TOKEN` is not permitted to create a Pages site — so until it is set,
+the Configure Pages step fails with `Get Pages site failed … Not Found`. After
+that one click, deployment is an ordinary `git push`.
 
 The stable URL is `https://<username>.github.io/<repository>/`, which is what
 to bookmark and what an installed app launches.

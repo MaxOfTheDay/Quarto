@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -32,13 +32,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Reads the Pages configuration. It cannot create one: the default
+      # GITHUB_TOKEN is not allowed to, so Pages has to be switched on once by
+      # hand (Settings -> Pages -> Source: GitHub Actions). Until it is, this
+      # step fails with "Get Pages site failed ... Not Found".
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
-        with:
-          # Turns Pages on with Actions as the source if it is not already, so
-          # a fresh clone of this repository needs no manual setup at all.
-          enablement: true
 
       - name: Build
         # base_path is /<repository> for a project site and empty for a user or
