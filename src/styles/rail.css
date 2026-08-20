@@ -1,0 +1,550 @@
+/* ── Stage: board left, pieces right on desktop; a single column on phones ── */
+
+.stage {
+  flex: 1;
+  display: grid;
+  gap: 22px clamp(24px, 4vw, 56px);
+  grid-template-columns: var(--board-size) minmax(232px, 296px);
+  grid-template-rows: auto auto auto;
+  /* The board spans both rail rows, so its top edge lines up with the tray's
+     and nothing is left floating in a half-empty row. */
+  grid-template-areas:
+    'status status'
+    'board  tray'
+    'board  pool';
+  /* `safe` keeps the top edge reachable when the viewport is shorter than the
+     composition, where plain centring would clip it. */
+  align-content: safe center;
+  justify-content: center;
+  --board-size: clamp(280px, min(46vw, 60vh), 560px);
+}
+
+.stage__status {
+  grid-area: status;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px 28px;
+  flex-wrap: wrap;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.stage__tray {
+  grid-area: tray;
+}
+.stage__board {
+  grid-area: board;
+}
+.stage__pool {
+  grid-area: pool;
+}
+
+/* ── Status line ─────────────────────────────────────────────────────────── */
+
+.status {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-size: 17px;
+  min-width: 0;
+}
+
+.status__actor {
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.status__action {
+  color: var(--ink-3);
+}
+
+.status[data-live='true'] .status__actor::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 9px;
+  vertical-align: 2px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.status__pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  align-self: center;
+  animation: pulse 1.15s var(--ease-out) infinite;
+}
+
+/* Two steps of a turn, spelled out once and then never explained again. */
+.phases {
+  display: flex;
+  gap: 14px;
+  list-style: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.phases__step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 62px;
+}
+
+.phases__rule {
+  height: 2px;
+  background: var(--hairline-strong);
+  transition: background var(--dur) var(--ease-out);
+}
+
+.phases__label {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.phases__step[data-on='true'] .phases__rule {
+  background: var(--accent);
+}
+
+.phases__step[data-on='true'] .phases__label {
+  color: var(--ink);
+}
+
+/* ── Board footer ────────────────────────────────────────────────────────── */
+
+.board-foot {
+  width: 100%;
+  margin: 14px 0 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.board-foot .btn {
+  margin-left: -10px;
+  height: 30px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* ── Hand tray ───────────────────────────────────────────────────────────── */
+
+.tray {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.tray__label {
+  transition: color var(--dur) var(--ease-out);
+}
+
+.eyebrow[data-accent='true'] {
+  color: var(--accent);
+}
+
+/* No box: the piece simply rests on a ruled surface, and the rule is what
+   lights up when the piece is yours to place. */
+.tray__shelf {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 116px;
+  border-bottom: 1px solid var(--hairline-strong);
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+.tray[data-armed='true'] .tray__shelf {
+  border-bottom-color: var(--accent);
+}
+
+/* A pool of warm light under the piece, only while it is waiting on you. */
+.tray__shelf::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 148px;
+  height: 30px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(184, 77, 40, 0.24), transparent);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.tray[data-armed='true'] .tray__shelf::after {
+  opacity: 1;
+}
+
+.tray__piece {
+  position: relative;
+  z-index: 1;
+  width: 116px;
+  height: 128px;
+}
+
+.tray__piece .piece {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 8px rgba(60, 44, 26, 0.26));
+}
+
+.tray__piece[data-hidden='true'] {
+  visibility: hidden;
+}
+
+@keyframes tray-arrive {
+  from {
+    transform: translateY(-7px) scale(0.93);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.tray__piece {
+  animation: tray-arrive 280ms var(--ease-settle) both;
+}
+
+/* An empty shelf shows the socket the next piece will occupy. */
+.tray__socket {
+  width: 64px;
+  height: 22px;
+  margin-bottom: 3px;
+  border-radius: 50%;
+  border: 1px dashed var(--hairline-strong);
+  opacity: 0.6;
+}
+
+/* The four attributes in words — piece properties never rest on colour alone. */
+.tray__attrs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  min-height: 16px;
+}
+
+.tray__attrs span + span::before {
+  content: '·';
+  margin: 0 7px;
+  color: var(--ink-3);
+  opacity: 0.7;
+}
+
+.tray__attrs-empty {
+  color: var(--ink-3);
+  opacity: 0.75;
+}
+
+/* ── Pool ────────────────────────────────────────────────────────────────── */
+
+.rail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rail-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.rail-section__count {
+  color: var(--ink-2);
+}
+
+/* The pool mirrors the board: four rows, one per family of pieces, held in a
+   single lattice so what is left reads as a set rather than as scattered items. */
+.pool {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.slot {
+  position: relative;
+  aspect-ratio: 1;
+  background: linear-gradient(180deg, #f2ece1, #e7e0d4);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.slot:disabled {
+  cursor: default;
+}
+
+.slot:focus-visible {
+  outline-offset: -3px;
+}
+
+.slot__well {
+  position: absolute;
+  left: 50%;
+  bottom: 26%;
+  width: 22%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(120, 100, 72, 0.13);
+  box-shadow:
+    inset 0 1.5px 2px rgba(84, 66, 42, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.slot[data-state='spent'] .slot__well {
+  opacity: 1;
+}
+
+.slot__piece {
+  position: absolute;
+  inset: 8% 4% 6%;
+  pointer-events: none;
+  transition:
+    transform var(--dur) var(--ease-settle),
+    filter var(--dur) var(--ease-out);
+}
+
+.slot__piece .piece {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 2.5px rgba(60, 44, 26, 0.22));
+}
+
+.slot__piece[data-hidden='true'] {
+  visibility: hidden;
+}
+
+/* Dormant while it is not your moment to choose — legible, but not inviting. */
+.pool:not([data-active='true']) .slot__piece {
+  opacity: 0.5;
+  filter: saturate(0.7);
+}
+
+.pool[data-active='true'] .slot:not(:disabled):hover,
+.pool[data-active='true'] .slot:not(:disabled):focus-visible {
+  background: #fffdf7;
+}
+
+.pool[data-active='true'] .slot:not(:disabled):hover .slot__piece,
+.pool[data-active='true'] .slot:not(:disabled):focus-visible .slot__piece {
+  transform: translateY(-4px);
+}
+
+.pool[data-active='true'] .slot:not(:disabled):hover .slot__piece .piece,
+.pool[data-active='true'] .slot:not(:disabled):focus-visible .slot__piece .piece {
+  filter: drop-shadow(0 7px 8px rgba(60, 44, 26, 0.28));
+}
+
+.pool[data-active='true'] .slot:not(:disabled):active .slot__piece {
+  transform: translateY(-1px);
+}
+
+/* ── Result ──────────────────────────────────────────────────────────────── */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.result {
+  animation: result-in 460ms 420ms var(--ease-settle) both;
+}
+
+.result__eyebrow {
+  color: var(--accent);
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--hairline);
+  width: 100%;
+}
+
+.result__headline {
+  font-family: var(--font-display);
+  font-size: 33px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.005em;
+  margin-top: 4px;
+}
+
+.result__reason {
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.result__reason strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.result__line {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 100%;
+  max-width: 232px;
+  margin: 8px 0 6px;
+  padding: 10px 12px 6px;
+  border-radius: 4px;
+  background: var(--paper-deep);
+  border: 1px solid var(--hairline);
+}
+
+.result__piece {
+  aspect-ratio: 1;
+}
+
+.result__piece .piece {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 3px rgba(60, 44, 26, 0.22));
+}
+
+.result__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'status'
+      'tray'
+      'board'
+      'pool';
+    grid-template-rows: none;
+    align-content: start;
+    gap: 16px;
+    /* 100% resolves against the padded column, so the slab can never overflow. */
+    --board-size: min(100%, 64vh);
+  }
+
+  .stage__status,
+  .stage__tray,
+  .stage__board,
+  .stage__pool {
+    width: 100%;
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  .stage__status {
+    align-items: baseline;
+    padding-bottom: 12px;
+  }
+
+  .status {
+    font-size: 16px;
+  }
+
+  .tray {
+    gap: 9px;
+  }
+
+  .tray__shelf {
+    height: 78px;
+    justify-content: flex-start;
+  }
+
+  .tray__shelf::after {
+    left: 46px;
+    width: 104px;
+    height: 22px;
+  }
+
+  .tray__piece {
+    width: 76px;
+    height: 84px;
+  }
+
+  .tray__socket {
+    width: 46px;
+    height: 16px;
+    margin-left: 12px;
+  }
+
+  .board-foot {
+    margin-top: 10px;
+  }
+
+  .result {
+    animation-delay: 300ms;
+  }
+}
+
+@media (max-width: 420px) {
+  .phases__step {
+    min-width: 54px;
+  }
+  .stage__status {
+    gap: 12px;
+  }
+}
+
+/* With the tray gone, the result takes the whole rail rather than sitting in
+   the pool's row with a hole above it. */
+@media (min-width: 901px) {
+  .stage[data-over='true'] .stage__pool {
+    grid-row: 2 / span 2;
+    grid-column: 2;
+  }
+}
