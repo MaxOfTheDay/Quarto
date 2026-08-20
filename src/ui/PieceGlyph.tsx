@@ -14,13 +14,22 @@ const BASE_Y = 93 // where the piece meets the board
 const H_TALL = 54
 const H_SHORT = 22
 const WELL = 0.5 // opening radius as a fraction of the top face
+/** Inset of the cropped viewBox; leaves a little air above the tallest piece. */
+const CROP_X = 10
+const CROP_Y = 16
 
 export interface PieceGlyphProps {
   piece: PieceId
   className?: string
+  /**
+   * Crops the drawing to the solid itself. The coordinate system leaves room
+   * around every piece so they share a baseline and footprint, which is right
+   * on a board cell and wasteful in a pool slot a third of the size.
+   */
+  crop?: boolean
 }
 
-export function PieceGlyph({ piece, className }: PieceGlyphProps) {
+export function PieceGlyph({ piece, className, crop }: PieceGlyphProps) {
   const tall = isTall(piece)
   const dark = isDark(piece)
   const square = isSquare(piece)
@@ -54,7 +63,7 @@ export function PieceGlyph({ piece, className }: PieceGlyphProps) {
   return (
     <svg
       className={className}
-      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+      viewBox={crop ? `${CROP_X} ${CROP_Y} ${VIEW_W - 2 * CROP_X} ${VIEW_H - CROP_Y}` : `0 0 ${VIEW_W} ${VIEW_H}`}
       preserveAspectRatio="xMidYMax meet"
       aria-hidden="true"
       focusable="false"

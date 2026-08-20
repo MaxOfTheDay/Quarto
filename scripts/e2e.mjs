@@ -267,6 +267,16 @@ for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
   await p.waitForTimeout(600)
   check(`${width}x${height}: placing fits on one screen`, (await overflow()) <= 0, `${await overflow()}px over`)
 
+  // The fit was originally bought by shrinking the pool pieces too far. Both
+  // constraints have to hold at once, so both are asserted.
+  const pool = await p.evaluate(() => {
+    const slot = document.querySelector('.slot').getBoundingClientRect()
+    const piece = document.querySelector('.slot__piece .piece').getBoundingClientRect()
+    return { slot: Math.round(slot.width), piece: Math.round(piece.width) }
+  })
+  check(`${width}x${height}: pool pieces stay legible`, pool.piece >= 38, `${pool.piece}px wide`)
+  check(`${width}x${height}: pool slots stay tappable`, pool.slot >= 42, `${pool.slot}px wide`)
+
   const attrs = await p.evaluate(() => {
     const el = document.querySelector('.tray__attrs')
     return { height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) || 16 }

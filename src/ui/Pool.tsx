@@ -81,7 +81,7 @@ export function Pool({ pool, selecting, onSelect, slotRef }: PoolProps) {
             <span className="slot__well" aria-hidden="true" />
             {available && (
               <span ref={(el) => slotRef(piece, el)} className="slot__piece">
-                <PieceGlyph piece={piece} className="piece" />
+                <PieceGlyph piece={piece} className="piece" crop />
               </span>
             )}
           </button>

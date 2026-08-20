@@ -386,18 +386,24 @@ export function App() {
             <span className="status__action">{status.action}</span>
             {isAiTurn && thinking && <span className="status__pulse" aria-hidden="true" />}
           </p>
-          {!state.outcome && (
-          <ol className="phases" aria-hidden="true">
-            <li className="phases__step" data-on={phase === 'place' ? 'true' : undefined}>
-              <span className="phases__rule" />
-              <span className="phases__label">1 Place</span>
-            </li>
-            <li className="phases__step" data-on={phase === 'select' ? 'true' : undefined}>
-              <span className="phases__rule" />
-              <span className="phases__label">2 Choose</span>
-            </li>
-          </ol>
-          )}
+
+          <div className="stage__status-end">
+            {!state.outcome && (
+              <ol className="phases" aria-hidden="true">
+                <li className="phases__step" data-on={phase === 'place' ? 'true' : undefined}>
+                  <span className="phases__rule" />
+                  <span className="phases__label">1 Place</span>
+                </li>
+                <li className="phases__step" data-on={phase === 'select' ? 'true' : undefined}>
+                  <span className="phases__rule" />
+                  <span className="phases__label">2 Choose</span>
+                </li>
+              </ol>
+            )}
+            <button type="button" className="btn btn--quiet undo" onClick={undo} disabled={!canUndo}>
+              Undo
+            </button>
+          </div>
         </div>
 
         {!state.outcome && (
@@ -425,11 +431,6 @@ export function App() {
             win={state.outcome?.kind === 'win' ? state.outcome.line : null}
             onPlace={onPlace}
           />
-          <div className="board-foot">
-            <button type="button" className="btn btn--quiet" onClick={undo} disabled={!canUndo}>
-              Undo
-            </button>
-          </div>
         </div>
 
         <div className="stage__pool" ref={poolAreaRef}>
