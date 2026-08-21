@@ -125,7 +125,7 @@ async function begin(p, mode = 'Two players') {
     await p.waitForTimeout(90)
   }
   await p.waitForTimeout(900)
-  check('a full board with no line is a draw', (await p.locator('.result__headline').innerText()) === 'Draw')
+  check('a full board with no line is a draw', (await p.locator('.status').innerText()) === 'Draw')
   check('no console errors through a full game', errors.length === 0, errors.join('; '))
   await ctx.close()
 }
@@ -176,13 +176,12 @@ async function begin(p, mode = 'Two players') {
   await p.getByRole('radio', { name: 'Hard', exact: true }).click()
   await p.getByRole('button', { name: 'Begin' }).click()
   await p.waitForSelector('.board__slab')
-  await p.getByRole('button', { name: 'Sound', exact: true }).click()
+  await p.getByRole('button', { name: 'Sound on', exact: true }).click()
   await p.waitForTimeout(200)
   await p.reload({ waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
   check('difficulty persists', await p.getByRole('radio', { name: 'Hard', exact: true }).getAttribute('aria-checked') === 'true')
-  check('mute persists', (await p.getByRole('button', { name: 'Sound' }).getAttribute('aria-pressed')) === 'false')
-  check('mute shows its state in the label', (await p.getByRole('button', { name: 'Sound' }).innerText()) === 'Muted')
+  check('mute persists', (await p.getByRole('button', { name: 'Sound off' }).getAttribute('aria-pressed')) === 'false')
   check('intro is not shown twice', (await p.locator('.primer').count()) === 0)
   await ctx.close()
 }
@@ -211,8 +210,8 @@ async function begin(p, mode = 'Two players') {
   // Only ever touch controls the UI has actually enabled.
   const readable = () =>
     p.evaluate(() => ({
-      over: !!document.querySelector('.result__headline'),
-      headline: document.querySelector('.result__headline')?.textContent ?? null,
+      over: !!document.querySelector('.status[data-outcome="true"]'),
+      headline: document.querySelector('.status[data-outcome="true"]')?.textContent ?? null,
       cells: [...document.querySelectorAll('.cell[data-target="true"]:not([disabled])')].map((el) => el.dataset.cell),
       slots: [...document.querySelectorAll('.pool[data-active="true"] .slot:not([disabled])')].map((el) => el.dataset.piece),
     }))
@@ -320,6 +319,108 @@ for (const [width, height] of [[390, 844], [1280, 900], [844, 390]]) {
     Math.abs(afterChoose.pool - afterPlace.pool),
   )
   check(`${width}x${height}: board and pool hold still across a turn`, moved === 0, `moved ${moved}px`)
+  await ctx.close()
+}
+
+// ── The turn state must never leave the screen ──────────────────────────────
+// Whose turn it is, and whether to place or to choose, is the one thing a
+// player has to be able to see at all times. It used to scroll away on short
+// screens and on any phone held sideways.
+for (const [width, height] of [[360, 640], [320, 568], [844, 390], [740, 360], [932, 430]]) {
+  const ctx = await browser.newContext({ viewport: { width, height } })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('radio', { name: 'Two players', exact: true }).click()
+  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(400)
+
+  const visible = () =>
+    p.evaluate(() => {
+      const r = document.querySelector('.status').getBoundingClientRect()
+      const stage = document.querySelector('.stage')
+      return {
+        onScreen: r.top >= 0 && r.bottom <= window.innerHeight,
+        pageScroll: document.documentElement.scrollHeight - window.innerHeight,
+        stageScroll: stage.scrollHeight - stage.clientHeight,
+        poolBottom: document.querySelector('.pool').getBoundingClientRect().bottom,
+      }
+    })
+
+  const before = await visible()
+  await p.locator('[data-piece="12"]').click()
+  await p.waitForTimeout(650)
+  const after = await visible()
+
+  check(`${width}x${height}: the turn stays on screen while choosing`, before.onScreen)
+  check(`${width}x${height}: the turn stays on screen while placing`, after.onScreen)
+  check(`${width}x${height}: the page never scrolls`, after.pageScroll <= 0, `${after.pageScroll}px over`)
+  check(`${width}x${height}: the stage never scrolls`, after.stageScroll <= 0, `${after.stageScroll}px over`)
+  check(`${width}x${height}: the pool is fully on screen`, after.poolBottom <= height + 1)
+  await ctx.close()
+}
+
+// ── The keyboard keeps its place ────────────────────────────────────────────
+// Acting on a cell or a piece disables it, and the browser then drops focus to
+// the body. Focus has to land on whatever the player must do next instead.
+{
+  const { p, ctx, errors } = await open()
+  await begin(p)
+  await p.locator('[data-piece="0"]').focus()
+  await p.keyboard.press('Enter')
+  await p.waitForTimeout(650)
+  const afterChoose = await p.evaluate(() => document.activeElement?.dataset?.cell ?? null)
+  check('choosing hands focus to an open cell', afterChoose !== null, `focus went to ${afterChoose}`)
+
+  await p.keyboard.press('Enter')
+  await p.waitForTimeout(650)
+  const afterPlace = await p.evaluate(() => document.activeElement?.dataset?.piece ?? null)
+  check('placing hands focus back to the pool', afterPlace !== null, `focus went to ${afterPlace}`)
+  check('no console errors while following focus', errors.length === 0, errors.join('; '))
+  await ctx.close()
+}
+
+// ── The top bar and the game share one left edge ────────────────────────────
+for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]]) {
+  const ctx = await browser.newContext({ viewport: { width, height } })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(300)
+  const edges = await p.evaluate(() => {
+    const bar = document.querySelector('.topbar').getBoundingClientRect()
+    const status = document.querySelector('.stage__status').getBoundingClientRect()
+    const board = document.querySelector('.board__slab').getBoundingClientRect()
+    return {
+      left: Math.round(status.left - bar.left),
+      right: Math.round(status.right - bar.right),
+      boardLeft: Math.round(board.left - bar.left),
+    }
+  })
+  check(`${width}x${height}: status shares the bar's edges`, edges.left === 0 && edges.right === 0, JSON.stringify(edges))
+  check(`${width}x${height}: the board starts on that edge`, edges.boardLeft === 0, `${edges.boardLeft}px off`)
+  await ctx.close()
+}
+
+// ── Pool pieces keep their tone ─────────────────────────────────────────────
+// Tone is one of the four attributes a player has to read to plan a move, so
+// the pool may not wash it out while it is the other phase's turn.
+{
+  const { p, ctx } = await open()
+  await begin(p)
+  const dormant = await p.evaluate(() => getComputedStyle(document.querySelector('.slot__piece')).opacity)
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(500)
+  const waiting = await p.evaluate(() => ({
+    opacity: +getComputedStyle(document.querySelector('.slot__piece')).opacity,
+    filter: getComputedStyle(document.querySelector('.slot__piece')).filter,
+  }))
+  check('the pool stays legible between turns', waiting.opacity >= 0.8, `opacity ${waiting.opacity}`)
+  check('the pool is never desaturated', waiting.filter === 'none', waiting.filter)
+  check('the live pool is at full strength', +dormant === 1, `opacity ${dormant}`)
   await ctx.close()
 }
 

@@ -1,18 +1,18 @@
 /* ── The slab ────────────────────────────────────────────────────────────── */
 
-.board {
-  display: flex;
-  justify-content: center;
-}
-
+/*
+ * The slab takes the room the stage has left over: `--board-size` is already
+ * capped by the viewport height, so `min()` against the column width is the
+ * only other constraint. It is never scrolled to and never clipped.
+ */
 .board__slab {
   --slab-pad: 4.2%;
   --cell-gap: 2.4%;
   position: relative;
-  width: var(--board-size);
+  width: min(100%, var(--board-size));
   aspect-ratio: 1;
   padding: var(--slab-pad);
-  border-radius: 7px;
+  border-radius: var(--r-slab);
   background:
     radial-gradient(140% 100% at 28% -6%, rgba(255, 228, 188, 0.1), transparent 58%),
     linear-gradient(180deg, #403426, #32281e 52%, #261e15);
@@ -80,6 +80,10 @@
   border-radius: 7%;
 }
 
+.cell[data-target] {
+  cursor: pointer;
+}
+
 .cell:disabled {
   cursor: default;
 }
@@ -106,7 +110,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 10%;
+  width: 8.5%;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--accent-warm);
@@ -117,19 +121,15 @@
     transform var(--dur) var(--ease-settle);
 }
 
-.cell[data-target] {
-  cursor: pointer;
-}
-
 .cell[data-target] .cell__target {
-  opacity: 0.75;
+  opacity: 0.6;
   transform: translate(-50%, -50%) scale(1);
 }
 
 .cell[data-target]:hover .cell__target,
 .cell[data-target]:focus-visible .cell__target {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.7);
+  transform: translate(-50%, -50%) scale(1.9);
 }
 
 .cell[data-target]:hover .cell__socket,
@@ -159,10 +159,6 @@
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
-}
-
-.cell__piece[data-hidden='true'] {
-  visibility: hidden;
 }
 
 @keyframes piece-drop {

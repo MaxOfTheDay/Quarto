@@ -1,53 +1,101 @@
-/* ── Stage: board left, pieces right on desktop; a single column on phones ── */
+/* ── Stage ───────────────────────────────────────────────────────────────── */
+
+/*
+ * One composition, three arrangements: board beside a rail on a desktop, board
+ * over a rail on a phone held upright, and a wide rail beside a short board
+ * when a phone is turned sideways. The board is always sized from the room
+ * that is actually left, so the game never scrolls and the turn state never
+ * leaves the screen.
+ */
 
 .stage {
+  --stage-gap-y: clamp(16px, 2.4vh, 26px);
+
   flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: var(--frame);
+  margin-inline: auto;
   display: grid;
-  gap: 22px clamp(24px, 4vw, 56px);
-  grid-template-columns: var(--board-size) minmax(232px, 296px);
-  grid-template-rows: auto auto auto;
-  /* The board spans both rail rows, so its top edge lines up with the tray's
-     and nothing is left floating in a half-empty row. */
+  gap: var(--stage-gap-y) var(--stage-gap-x);
+  /* The board column is the board's own width, so the board starts on the
+     page's left edge rather than floating inside a column wider than itself. */
+  grid-template-columns: var(--board-size) var(--rail-w);
+  grid-template-rows: auto auto;
   grid-template-areas:
     'status status'
-    'board  tray'
-    'board  pool';
-  /* `safe` keeps the top edge reachable when the viewport is shorter than the
-     composition, where plain centring would clip it. */
+    'board  rail';
+  /* `safe` keeps the top edge reachable if a viewport is ever shorter than the
+     composition, where plain centring would put it out of reach. */
   align-content: safe center;
-  justify-content: center;
-  --board-size: clamp(280px, min(46vw, 60vh), 560px);
+  overflow: hidden;
+  overflow: clip;
 }
+
+.stage__board {
+  grid-area: board;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The rail is one cell beside the board, so their top edges line up and the
+ * space between the tray and the pool is set here rather than by whatever the
+ * board's height leaves over. When the layout stacks, `display: contents`
+ * dissolves this box and the tray and the pool take rows of their own.
+ */
+.stage__rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vh, 30px);
+  min-width: 0;
+}
+
+.stage__tray {
+  min-width: 0;
+}
+
+.stage__pool {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ── Status ──────────────────────────────────────────────────────────────── */
 
 .stage__status {
   grid-area: status;
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 20px 28px;
-  flex-wrap: wrap;
-  padding-bottom: 15px;
+  gap: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--hairline);
 }
 
-.stage__tray {
-  grid-area: tray;
-}
-.stage__board {
-  grid-area: board;
-}
-.stage__pool {
-  grid-area: pool;
-}
-
-/* ── Status line ─────────────────────────────────────────────────────────── */
-
+/*
+ * Whose turn, what they must do, and what happens straight after — the three
+ * things Quarto's split turn keeps making people ask. The second line is
+ * always present so the row never changes height between the two phases.
+ */
 .status {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.status__line {
   display: flex;
   align-items: baseline;
-  gap: 9px;
+  flex-wrap: wrap;
+  gap: 0 9px;
   font-size: 17px;
-  min-width: 0;
+  line-height: 1.35;
 }
 
 .status__actor {
@@ -60,6 +108,13 @@
   color: var(--ink-3);
 }
 
+.status__next {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-3);
+  min-height: 17.5px;
+}
+
 .status[data-live='true'] .status__actor::before {
   content: '';
   display: inline-block;
@@ -69,6 +124,28 @@
   background: var(--accent);
   margin-right: 9px;
   vertical-align: 2px;
+}
+
+/* The result is announced here rather than a second time down in the rail. */
+.status[data-outcome='true'] .status__line {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.05;
+  gap: 0 10px;
+}
+
+.status[data-outcome='true'] .status__actor {
+  font-weight: 400;
+}
+
+.status[data-outcome='true'] .status__action {
+  color: var(--ink-2);
+}
+
+/* Nothing follows a finished game, so the line that says what is next goes
+   rather than leaving a reserved gap under the result. */
+.status[data-outcome='true'] .status__next {
+  display: none;
 }
 
 @keyframes pulse {
@@ -92,104 +169,50 @@
   animation: pulse 1.15s var(--ease-out) infinite;
 }
 
-.stage__status-end {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-/* Undo lives with the turn state rather than in a row of its own under the
-   board, which on a phone was ~40px the pool needed more. */
 .undo {
-  height: 30px;
-  padding: 0 10px;
-  margin-right: -10px;
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
-/* Set apart from the phase rail: without this it reads as a third step in a
-   numbered sequence. */
-.undo::before {
-  content: '';
-  width: 1px;
-  height: 13px;
-  margin-right: 14px;
-  background: var(--hairline-strong);
-}
-
-/* Two steps of a turn, spelled out once and then never explained again. */
-.phases {
-  display: flex;
-  gap: 14px;
-  list-style: none;
-  padding: 0;
   flex-shrink: 0;
-}
-
-.phases__step {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 62px;
-}
-
-.phases__rule {
-  height: 2px;
-  background: var(--hairline-strong);
-  transition: background var(--dur) var(--ease-out);
-}
-
-.phases__label {
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  margin-right: -10px;
   color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-  transition: color var(--dur) var(--ease-out);
-}
-
-.phases__step[data-on='true'] .phases__rule {
-  background: var(--accent);
-}
-
-.phases__step[data-on='true'] .phases__label {
-  color: var(--ink);
 }
 
 /* ── Hand tray ───────────────────────────────────────────────────────────── */
 
+/*
+ * The piece in play, on its own shelf so it never reads as part of the pool.
+ * The shelf keeps its height in both phases: while its owner is choosing it
+ * shows the empty socket the next piece will land in, which is literally where
+ * the chosen piece flies to.
+ */
 .tray {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
+  /* One number drives the piece and the socket it stands in, so an empty shelf
+     shows exactly the footprint the next piece will fill. */
+  --tray-piece-w: 92px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'label'
+    'shelf'
+    'attrs';
+  row-gap: 9px;
 }
 
 .tray__label {
+  grid-area: label;
   transition: color var(--dur) var(--ease-out);
 }
 
-.eyebrow[data-accent='true'] {
-  color: var(--accent);
-}
-
-/* No box: the piece simply rests on a ruled surface, and the rule is what
-   lights up when the piece is yours to place. */
+/* No box: the piece rests on a ruled surface, and the rule is what lights up
+   when the piece is yours to place. */
 .tray__shelf {
+  grid-area: shelf;
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 116px;
+  height: 94px;
   border-bottom: 1px solid var(--hairline-strong);
   transition: border-color var(--dur) var(--ease-out);
 }
-
-/* The shelf keeps its height whether or not it holds a piece. It used to
-   collapse while its owner was choosing, which looked considered and shifted
-   the board and the pool by that much on every single half-move. */
 
 .tray[data-armed='true'] .tray__shelf {
   border-bottom-color: var(--accent);
@@ -201,11 +224,11 @@
   position: absolute;
   bottom: -1px;
   left: 50%;
-  width: 148px;
-  height: 30px;
+  width: 132px;
+  height: 26px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(171, 69, 35, 0.24), transparent);
+  background: radial-gradient(closest-side, rgba(162, 64, 31, 0.24), transparent);
   opacity: 0;
   transition: opacity var(--dur-slow) var(--ease-out);
   pointer-events: none;
@@ -218,8 +241,10 @@
 .tray__piece {
   position: relative;
   z-index: 1;
-  width: 116px;
-  height: 128px;
+  width: var(--tray-piece-w);
+  /* The glyph's own 100 x 108 proportions. */
+  height: calc(var(--tray-piece-w) * 1.08);
+  animation: tray-arrive 280ms var(--ease-settle) both;
 }
 
 .tray__piece .piece {
@@ -243,44 +268,37 @@
   }
 }
 
-.tray__piece {
-  animation: tray-arrive 280ms var(--ease-settle) both;
-}
-
-/* An empty shelf shows the socket the next piece will occupy. */
+/* An empty shelf shows the socket the chosen piece will arrive in, drawn to the
+   footprint a piece actually stands on. */
 .tray__socket {
-  width: 48px;
-  height: 17px;
+  width: calc(var(--tray-piece-w) * 0.72);
+  height: calc(var(--tray-piece-w) * 0.2);
   margin-bottom: 4px;
   border-radius: 50%;
   border: 1px dashed var(--hairline-strong);
-  opacity: 0.55;
+  opacity: 0.62;
 }
 
-/* The four attributes in words — piece properties never rest on colour alone. */
+/* The four attributes in words — a piece never rests on tone alone. */
 .tray__attrs {
+  grid-area: attrs;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 0;
+  flex-wrap: nowrap;
+  justify-content: center;
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.13em;
+  line-height: 1.4;
   text-transform: uppercase;
   color: var(--ink-2);
-  min-height: 16px;
-  transition: opacity var(--dur) var(--ease-out);
+  min-height: 15px;
 }
 
 .tray__attrs span + span::before {
   content: '·';
-  margin: 0 7px;
+  margin: 0 6px;
   color: var(--ink-3);
   opacity: 0.7;
-}
-
-.tray__attrs-empty {
-  color: var(--ink-3);
-  opacity: 0.75;
 }
 
 /* ── Pool ────────────────────────────────────────────────────────────────── */
@@ -288,32 +306,41 @@
 .rail-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-height: 0;
 }
 
+/* The same rule the tray uses: whichever surface is live wears the accent. */
 .rail-section__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 9px;
-  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline-strong);
+  transition: border-color var(--dur) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.rail-section[data-armed='true'] .rail-section__head {
+  border-bottom-color: var(--accent);
 }
 
 .rail-section__count {
   color: var(--ink-2);
 }
 
-/* The pool mirrors the board: four rows, one per family of pieces, held in a
-   single lattice so what is left reads as a set rather than as scattered items. */
+/* The pool mirrors the board: a lattice whose rows are the families of pieces,
+   so what is left reads as a set rather than as scattered items. */
 .pool {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   background: var(--hairline);
   border: 1px solid var(--hairline);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   overflow: hidden;
+  min-height: 0;
 }
 
 .slot {
@@ -369,19 +396,23 @@
   filter: drop-shadow(0 2px 2.5px rgba(60, 44, 26, 0.22));
 }
 
-.slot__piece[data-hidden='true'] {
-  visibility: hidden;
+/*
+ * Waiting rather than dormant. Tone is one of the four attributes you have to
+ * read to plan a move, so the pieces keep very nearly all their contrast even
+ * when it is not your moment to choose; the invitation is carried by the slots
+ * lighting up, not by the pieces going grey.
+ */
+.pool:not([data-active='true']) .slot__piece {
+  opacity: 0.86;
 }
 
-/* Dormant while it is not your moment to choose — legible, but not inviting. */
-.pool:not([data-active='true']) .slot__piece {
-  opacity: 0.5;
-  filter: saturate(0.7);
+.pool[data-active='true'] .slot[data-state='available'] {
+  background: linear-gradient(180deg, #f8f3e9, #ece5d9);
 }
 
 .pool[data-active='true'] .slot:not(:disabled):hover,
 .pool[data-active='true'] .slot:not(:disabled):focus-visible {
-  background: #fffdf7;
+  background: var(--paper-raised);
 }
 
 .pool[data-active='true'] .slot:not(:disabled):hover .slot__piece,
@@ -400,11 +431,14 @@
 
 /* ── Result ──────────────────────────────────────────────────────────────── */
 
+/* The outcome itself is announced by the status line. What is left here is why
+   it happened, and what to do next. */
 .result {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 16px;
+  animation: result-in 420ms 380ms var(--ease-settle) both;
 }
 
 @keyframes result-in {
@@ -418,28 +452,9 @@
   }
 }
 
-.result {
-  animation: result-in 460ms 420ms var(--ease-settle) both;
-}
-
-.result__eyebrow {
-  color: var(--accent);
-  padding-bottom: 9px;
-  border-bottom: 1px solid var(--hairline);
-  width: 100%;
-}
-
-.result__headline {
-  font-family: var(--font-display);
-  font-size: 33px;
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: 0.005em;
-  margin-top: 4px;
-}
-
 .result__reason {
   font-size: 14.5px;
+  line-height: 1.5;
   color: var(--ink-2);
 }
 
@@ -448,88 +463,66 @@
   color: var(--ink);
 }
 
-.result__line {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  width: 100%;
-  max-width: 232px;
-  margin: 8px 0 6px;
-  padding: 10px 12px 6px;
-  border-radius: 4px;
-  background: var(--paper-deep);
-  border: 1px solid var(--hairline);
-}
-
-.result__piece {
-  aspect-ratio: 1;
-}
-
-.result__piece .piece {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 2px 3px rgba(60, 44, 26, 0.22));
-}
-
 .result__actions {
   display: flex;
   gap: 10px;
-  margin-top: 8px;
   flex-wrap: wrap;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* ── Upright phones and small tablets ────────────────────────────────────── */
 
-/* Stack only when there is height to stack into: portrait phones, and anything
-   narrow enough that two columns will not fit at all. A phone held sideways
-   falls through to the two-column layout below instead. */
+/* Stack only when there is height to stack into. A phone held sideways falls
+   through to the two-column layout below instead. */
 @media (max-width: 900px) and (min-height: 561px), (max-width: 619px) {
   .stage {
     grid-template-columns: minmax(0, 1fr);
+    /* The board row absorbs whatever height is spare, which keeps the turn
+       state under the top bar and the pool within reach at the bottom rather
+       than floating both towards the middle. */
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'status'
       'tray'
       'board'
       'pool';
-    grid-template-rows: none;
-    align-content: start;
-    gap: 16px;
-    /* 100% resolves against the padded column, so the slab can never overflow. */
-    --board-size: min(100%, 64vh);
+    align-content: stretch;
+    gap: 14px;
   }
 
-  .stage__status,
-  .stage__tray,
-  .stage__board,
+  .stage[data-over='true'] {
+    grid-template-rows: auto auto auto auto;
+    align-content: safe center;
+  }
+
+  .stage__board {
+    align-items: center;
+  }
+
+  /* The tray leaves the rail and sits under the status, where it reads as part
+     of the turn rather than as part of the pool. */
+  .stage__rail {
+    display: contents;
+  }
+
+  .stage__tray {
+    grid-area: tray;
+  }
+
   .stage__pool {
-    width: 100%;
-    max-width: 520px;
-    margin-inline: auto;
+    grid-area: pool;
   }
 
   .stage__status {
-    align-items: baseline;
-    padding-bottom: 11px;
-    gap: 7px 20px;
+    padding-bottom: 10px;
   }
 
-  .stage__status-end {
-    flex: 1;
-    justify-content: space-between;
-  }
-
-  .undo {
-    height: 34px;
-  }
-
-  .status {
+  .status__line {
     font-size: 16px;
   }
 
   /* The shelf sits beside its label rather than above it: the same information
-     in half the height, which is what lets the placing phase fit too. */
+     in half the height, which is what lets both phases fit on one screen. */
   .tray {
-    display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       'shelf label'
@@ -540,153 +533,212 @@
   }
 
   .tray__label {
-    grid-area: label;
     align-self: end;
   }
 
-  .tray__shelf {
-    grid-area: shelf;
-    width: 88px;
-    height: 64px;
-    justify-content: center;
+  .tray__attrs {
+    justify-content: flex-start;
   }
 
-  /* Tightened so the longest reading — short, light, square, hollow — stays on
-     one line; wrapping orphans a leading separator and looks broken. */
-  /* Keeps its line whether or not there is a piece to describe, so the label
-     above it does not move between phases. */
+  .tray__shelf {
+    width: 84px;
+    height: 60px;
+  }
+
+  .tray__shelf::after {
+    width: 80px;
+    height: 18px;
+  }
+
+  .tray {
+    --tray-piece-w: 62px;
+  }
+
+  .tray__socket {
+    margin-bottom: 3px;
+  }
+
   .tray__attrs {
-    grid-area: attrs;
-    min-height: 15px;
-    flex-wrap: nowrap;
     font-size: 10px;
-    letter-spacing: 0.11em;
+    letter-spacing: 0.1em;
   }
 
   .tray__attrs span + span::before {
     margin: 0 5px;
   }
 
-  .tray__shelf::after {
-    left: 50%;
-    width: 84px;
-    height: 20px;
-  }
-
-  .tray__piece {
-    width: 66px;
-    height: 74px;
-  }
-
-  .tray__socket {
-    width: 40px;
-    height: 14px;
-    margin-left: 0;
-    margin-bottom: 3px;
-  }
-
   /* Eight across, two down. A 4x4 pool is about 360px tall on a phone, which is
      the whole reason the board and the pool could not share a screen — and
-     needing both in view at once is exactly what choosing a piece requires.
-     The rows still hold together as families: light on top, dark beneath. */
+     having both in view at once is exactly what choosing a piece requires. */
   .pool {
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 
-  /* Slot height past this point buys nothing: the piece is limited by the
-     column width, not by how tall its cell is. */
+  /* Height past this point buys nothing: the piece is limited by the column
+     width, not by how tall its cell is. */
   .slot {
-    aspect-ratio: 0.82;
+    aspect-ratio: 0.84;
   }
 
   .slot__piece {
     inset: 6% 3% 5%;
   }
 
-  .slot__well {
-    width: 22%;
-    bottom: 26%;
-  }
-
   .result {
-    animation-delay: 300ms;
+    animation-delay: 280ms;
   }
 }
 
-@media (max-width: 420px) {
-  .phases__step {
-    min-width: 54px;
+/* ── Phones and small tablets turned sideways ────────────────────────────── */
+
+/*
+ * Short and wide. There is very little height and a great deal of width, so the
+ * rail takes everything the board does not need and lays the pool out eight
+ * across — the opposite of the desktop rail, and the only way both the board
+ * and the pieces fit above the fold.
+ */
+@media (max-height: 560px) and (min-width: 620px) {
+  .stage {
+    --stage-gap-y: 12px;
+    grid-template-columns: var(--board-size) minmax(0, 1fr);
+    /* A definite body row: the pool can then give up height rather than push
+       the board off the bottom of a screen this short. */
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px clamp(20px, 3vw, 40px);
   }
-  .stage__status {
+
+  /* Wide screens get air to the right of the rail rather than sixteen pieces
+     stretched across it; the tray and the pool keep a shared right edge. */
+  .stage__rail {
     gap: 12px;
+    max-width: 720px;
   }
-}
 
-/* With the tray gone, the result takes the whole rail rather than sitting in
-   the pool's row with a hole above it. */
-@media (min-width: 901px), (max-height: 560px) and (min-width: 620px) {
-  .stage[data-over='true'] .stage__pool {
-    grid-row: 2 / span 2;
-    grid-column: 2;
-  }
-}
-
-/* On a phone the pool is the bottom tray, so it runs to the edges of the
-   screen: at eight columns those few pixels per slot are the difference
-   between a comfortable target and a fiddly one. */
-@media (max-width: 560px) {
+  /* The rail may shrink; the pool is what gives, and its two rows share
+     whatever height is left rather than insisting on a shape that might not
+     fit. Square slots are the ceiling, so a wide screen leaves air to the
+     right of the pool instead of stretching sixteen pieces across it. */
+  .stage__pool,
+  .rail-section,
   .pool {
-    /* Not quite to the bezel: a few pixels keep the outermost pieces off the
-       screen edge, where rounded corners and gesture areas live. */
-    margin-inline: calc(-1 * (var(--safe-l) + 9px)) calc(-1 * (var(--safe-r) + 9px));
+    min-height: 0;
+  }
+
+  .pool {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    max-height: 100%;
+  }
+
+  .slot {
+    aspect-ratio: 1;
+  }
+
+
+  .app {
+    padding-top: calc(var(--safe-t) + 8px);
+    padding-bottom: calc(var(--safe-b) + 12px);
+  }
+
+  .topbar {
+    padding-bottom: 8px;
+  }
+
+  .stage__status {
+    padding-bottom: 9px;
+  }
+
+  .status__line {
+    font-size: 15.5px;
+  }
+
+  .status[data-outcome='true'] .status__line {
+    font-size: 25px;
+  }
+
+  /* The shelf sits beside its label rather than above it: the same information
+     in half the height, which is what lets both phases fit on one screen. */
+  .tray {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'shelf label'
+      'shelf attrs';
+    align-items: end;
+    column-gap: 16px;
+    row-gap: 3px;
+  }
+
+  .tray__label {
+    align-self: end;
+  }
+
+  .tray__attrs {
+    justify-content: flex-start;
+  }
+
+  .tray__shelf {
+    width: 92px;
+    height: 68px;
+  }
+
+  .tray__shelf::after {
+    width: 88px;
+    height: 18px;
+  }
+
+  .tray {
+    --tray-piece-w: 68px;
+  }
+
+  .pool {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .slot {
+    aspect-ratio: 0.84;
+  }
+}
+
+/* ── Narrow phones ───────────────────────────────────────────────────────── */
+
+/* ── The pool as a bottom tray ───────────────────────────────────────────── */
+
+/*
+ * On a phone the pool is the tray at the bottom of the screen, so it runs
+ * almost to the edges: at eight columns those few pixels per slot are the
+ * difference between a comfortable target and a fiddly one. The stage widens
+ * to the full screen and pads itself back, which keeps everything else on the
+ * page's own left edge and keeps the bleed inside the stage's clip box.
+ */
+@media (max-width: 460px) {
+  .stage {
+    /* `width: auto` so the negative margins widen the box rather than move it;
+       the padding then puts the board and the status back on the page's own
+       left edge, level with the top bar. */
+    width: auto;
+    max-width: none;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+  }
+
+  .pool {
+    /* Not quite to the bezel: a sliver is left for rounded corners and gesture
+       areas. */
+    margin-inline: calc(-1 * (var(--gutter) - 8px));
     border-radius: 0;
     border-inline: none;
   }
 }
 
-/* Short and wide — a phone or small tablet in landscape. The two-column layout
-   applies as it does on a desktop, but every fixed height has to come down or
-   the board is pushed off the bottom of the screen. */
-@media (max-height: 560px) and (min-width: 620px) {
+@media (max-width: 400px) {
   .stage {
-    --board-size: clamp(200px, min(44vw, 62vh), 560px);
-    grid-template-columns: var(--board-size) minmax(196px, 262px);
-    gap: 14px clamp(18px, 3vw, 40px);
+    gap: 12px;
   }
 
-  .app {
-    padding-top: calc(var(--safe-t) + 10px);
-    padding-bottom: calc(var(--safe-b) + 14px);
-  }
-
-  .topbar {
-    padding-bottom: 9px;
-    margin-bottom: 14px;
-  }
-
-  .stage__status {
-    padding-bottom: 11px;
-  }
-
-  .status {
+  .status__line {
     font-size: 15.5px;
   }
 
-  .tray__shelf {
-    height: 86px;
-  }
-
-  .tray__piece {
-    width: 84px;
-    height: 94px;
-  }
-
-  .tray__shelf::after {
-    width: 108px;
-    height: 22px;
-  }
-
-  .result__headline {
-    font-size: 27px;
+  .status__next {
+    font-size: 12px;
   }
 }

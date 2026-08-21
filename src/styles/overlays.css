@@ -46,7 +46,7 @@
 
 .setup__head {
   text-align: center;
-  margin-bottom: 34px;
+  margin-bottom: clamp(24px, 4vh, 36px);
 }
 
 .setup__title {
@@ -64,7 +64,7 @@
 }
 
 .primer {
-  margin-bottom: 32px;
+  margin-bottom: clamp(24px, 4vh, 34px);
   padding-top: 22px;
   border-block: 1px solid var(--hairline);
 }
@@ -133,7 +133,7 @@
 }
 
 .setup__foot {
-  margin-top: 34px;
+  margin-top: clamp(26px, 4vh, 36px);
   padding-top: 24px;
   border-top: 1px solid var(--hairline);
   display: flex;
@@ -151,7 +151,7 @@
 @media (max-width: 520px) {
   .field {
     grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+    gap: 7px;
   }
   .primer__pieces .piece {
     width: 46px;
@@ -166,6 +166,153 @@
   }
   .setup__links {
     justify-content: center;
+  }
+}
+
+/* Short upright phones: the same screen on a tighter rhythm, so the one thing
+   that matters — Begin — stays above the fold instead of below it. */
+@media (max-height: 780px) and (max-width: 619px) {
+  .setup {
+    padding-block: calc(var(--safe-t) + 20px) calc(var(--safe-b) + 20px);
+  }
+  .setup__title {
+    font-size: clamp(32px, 8.5vw, 42px);
+  }
+  .setup__tagline {
+    margin-top: 9px;
+    font-size: 13.5px;
+  }
+  .setup__head {
+    margin-bottom: 18px;
+  }
+  .primer {
+    padding-top: 16px;
+    margin-bottom: 18px;
+  }
+  .primer__list {
+    gap: 9px;
+  }
+  .primer__list li {
+    font-size: 13.5px;
+  }
+  .primer__pieces {
+    margin-top: 14px;
+  }
+  .primer__pieces .piece {
+    width: 38px;
+    height: 43px;
+  }
+  .setup__fields {
+    gap: 13px;
+  }
+  .setup__foot {
+    margin-top: 18px;
+    padding-top: 16px;
+    gap: 12px;
+  }
+}
+
+/* Smaller again on the shortest phones, where the primer is the difference
+   between reaching Begin and hunting for it. */
+@media (max-height: 620px) and (max-width: 619px) {
+  .setup {
+    padding-block: calc(var(--safe-t) + 16px) calc(var(--safe-b) + 16px);
+  }
+  .setup__head {
+    margin-bottom: 12px;
+  }
+  .setup__tagline {
+    margin-top: 7px;
+  }
+  .primer {
+    padding-top: 12px;
+    margin-bottom: 12px;
+  }
+  .primer__list {
+    gap: 8px;
+  }
+  .primer__list li {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .primer__pieces {
+    margin-top: 11px;
+  }
+  .primer__pieces .piece {
+    width: 32px;
+    height: 36px;
+  }
+  .setup__fields {
+    gap: 11px;
+  }
+  .setup__foot {
+    margin-top: 14px;
+    padding-top: 13px;
+  }
+}
+
+/*
+ * Sideways: two columns rather than one long scroll. What the game is goes on
+ * the left, what you have to decide goes on the right, and Begin stays in view.
+ */
+@media (max-height: 560px) and (min-width: 620px) {
+  .setup {
+    padding-block: calc(var(--safe-t) + 16px) calc(var(--safe-b) + 16px);
+  }
+
+  .setup__inner {
+    max-width: 860px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(30px, 5vw, 60px);
+    align-items: start;
+    grid-template-areas:
+      'head   fields'
+      'primer fields'
+      'primer foot';
+  }
+
+  .setup__head {
+    grid-area: head;
+    text-align: left;
+    margin-bottom: 16px;
+  }
+
+  .setup__title {
+    font-size: clamp(38px, 5.5vw, 50px);
+  }
+
+  .primer {
+    grid-area: primer;
+    margin-bottom: 0;
+    padding-top: 14px;
+    border-bottom: none;
+  }
+
+  .primer__pieces {
+    justify-content: flex-start;
+    margin-top: 16px;
+  }
+
+  .primer__pieces .piece {
+    width: 44px;
+    height: 49px;
+  }
+
+  .setup__fields {
+    grid-area: fields;
+    gap: 14px;
+  }
+
+  .field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .setup__foot {
+    grid-area: foot;
+    margin-top: 18px;
+    padding-top: 14px;
   }
 }
 
@@ -215,11 +362,9 @@
   max-height: 100%;
   overflow-y: auto;
   padding: 26px;
-  border-radius: 5px;
+  border-radius: var(--r-md);
   background: var(--paper);
-  box-shadow:
-    0 1px 2px rgba(33, 26, 18, 0.2),
-    0 24px 60px -18px rgba(33, 26, 18, 0.5);
+  box-shadow: var(--shadow-lg);
   animation: sheet-in var(--dur-slow) var(--ease-settle) both;
 }
 
@@ -261,6 +406,7 @@
 
 .sheet__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 24px;
@@ -269,7 +415,7 @@
 .sheet__body {
   display: flex;
   flex-direction: column;
-  gap: 23px;
+  gap: 21px;
 }
 
 .rule {
@@ -295,14 +441,14 @@
   gap: 4px;
   margin-top: 6px;
   padding: 14px 14px 10px;
-  border-radius: 4px;
+  border-radius: var(--r-md);
   background: linear-gradient(168deg, var(--wood-hi), var(--wood) 44%, var(--wood-lo));
   box-shadow: inset 0 1px 0 rgba(255, 234, 200, 0.16);
 }
 
 .rule__demo-cell {
   aspect-ratio: 1;
-  border-radius: 12%;
+  border-radius: 7%;
   background: linear-gradient(178deg, var(--socket-lo), var(--socket) 58%, #402f1f);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55);
   padding: 6%;
@@ -346,8 +492,8 @@
 }
 
 .axis__pair .piece {
-  width: 50px;
-  height: 56px;
+  width: 52px;
+  height: 58px;
   filter: drop-shadow(0 2px 2px rgba(60, 44, 26, 0.18));
 }
 
@@ -392,7 +538,7 @@ kbd {
   padding: 2px 7px;
   border: 1px solid var(--hairline-strong);
   border-bottom-width: 2px;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: rgba(255, 253, 247, 0.75);
   font-family: inherit;
   font-size: 11.5px;

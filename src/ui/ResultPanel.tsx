@@ -1,26 +1,24 @@
-import { describeSharedAttributes, type Board, type Outcome } from '../game'
-import { PieceGlyph } from './PieceGlyph'
+import { describeSharedAttributes, type Outcome } from '../game'
 
 export interface ResultPanelProps {
   outcome: NonNullable<Outcome>
-  board: Board
-  names: [string, string]
   onRematch: () => void
   onNewGame: () => void
 }
 
-export function ResultPanel({ outcome, board, names, onRematch, onNewGame }: ResultPanelProps) {
-  const win = outcome.kind === 'win' ? outcome : null
-  const shared = win ? describeSharedAttributes(win.line.mask, win.line.value) : []
+/**
+ * Who won is announced once, by the status line. What is left for the rail is
+ * why it happened — the board has already lit the four pieces — and the two
+ * ways out of the finished game.
+ */
+export function ResultPanel({ outcome, onRematch, onNewGame }: ResultPanelProps) {
+  const shared = outcome.kind === 'win' ? describeSharedAttributes(outcome.line.mask, outcome.line.value) : []
 
   return (
-    <section className="result" aria-live="assertive">
-      <p className="eyebrow result__eyebrow">{win ? 'Quarto' : 'No Quarto'}</p>
-      <h2 className="result__headline">{win ? `${names[win.player]} wins` : 'Draw'}</h2>
-
-      {win ? (
-        <>
-          <p className="result__reason">
+    <section className="result">
+      <p className="result__reason">
+        {outcome.kind === 'win' ? (
+          <>
             Four{' '}
             {shared.map((attribute, i) => (
               <span key={attribute}>
@@ -29,18 +27,11 @@ export function ResultPanel({ outcome, board, names, onRematch, onNewGame }: Res
               </span>
             ))}{' '}
             pieces in a line.
-          </p>
-          <div className="result__line" aria-hidden="true">
-            {win.line.cells.map((cell) => (
-              <span className="result__piece" key={cell}>
-                <PieceGlyph piece={board[cell]!} className="piece" />
-              </span>
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="result__reason">All sixteen pieces placed, no line ever agreed.</p>
-      )}
+          </>
+        ) : (
+          'All sixteen pieces placed, and no line ever agreed.'
+        )}
+      </p>
 
       <div className="result__actions">
         <button type="button" className="btn btn--primary" onClick={onRematch}>

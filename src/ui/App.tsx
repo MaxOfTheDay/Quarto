@@ -8,14 +8,12 @@ import {
   placePiece,
   selectPiece,
   type GameState,
-  type Phase,
   type PieceId,
   type PlayerId,
 } from '../game'
 import { AiClient } from '../game/ai/bridge'
 import type { Difficulty } from '../game/ai'
 import { flyClone, prefersReducedMotion } from '../lib/flight'
-import { useMediaQuery } from '../lib/useMediaQuery'
 import { resolveOpener, usePrefs, type Mode } from '../lib/prefs'
 import { usePwa } from '../lib/pwa'
 import { play, setSoundEnabled } from '../lib/sound'
@@ -38,10 +36,26 @@ interface Session {
   /** The side the person at the keyboard controls; null when both are human. */
   human: PlayerId | null
   names: [string, string]
-  possessives: [string, string]
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** Speaker with waves, or speaker with a slash. The state is in the shape. */
+function SoundIcon({ on }: { on: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M11 5 6.5 9H3v6h3.5L11 19V5Z" strokeLinejoin="round" />
+      {on ? (
+        <>
+          <path d="M15 9.5a3.5 3.5 0 0 1 0 5" strokeLinecap="round" />
+          <path d="M17.8 6.8a7 7 0 0 1 0 10.4" strokeLinecap="round" />
+        </>
+      ) : (
+        <path d="m16 9.5 5 5m0-5-5 5" strokeLinecap="round" />
+      )}
+    </svg>
+  )
+}
 
 export function App() {
   const [prefs, setPrefs] = usePrefs()
@@ -62,8 +76,9 @@ export function App() {
   const trayRef = useRef<HTMLSpanElement>(null)
   const slotEls = useRef(new Map<PieceId, HTMLElement>())
   const pendingPass = useRef<DOMRect | null>(null)
-  const trayAreaRef = useRef<HTMLDivElement>(null)
-  const poolAreaRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLElement>(null)
+  /** Set when a move is made from the keyboard, so focus can be handed on. */
+  const followFocus = useRef(false)
 
   if (!ai.current) ai.current = new AiClient()
   useEffect(() => () => ai.current?.dispose(), [])
@@ -96,6 +111,7 @@ export function App() {
   const onPlace = useCallback(
     (cell: number) => {
       if (!localTurn || phase !== 'place') return
+      followFocus.current = stageRef.current?.contains(document.activeElement) ?? false
       play('place')
       commitPlace(cell)
     },
@@ -107,6 +123,7 @@ export function App() {
       if (!localTurn || phase !== 'select') return
       const source = slotEls.current.get(piece)
       pendingPass.current = source?.getBoundingClientRect() ?? null
+      followFocus.current = stageRef.current?.contains(document.activeElement) ?? false
       play('select')
       commitSelect(piece)
     },
@@ -178,28 +195,25 @@ export function App() {
     void flyClone(from, trayRef.current, { duration: 340, lift: 30 }).then(() => setTrayHidden(false))
   }, [state.ply])
 
-  /* ── Following the turn on a small screen ─────────────────────────────── */
+  /* ── Following the turn with the keyboard ─────────────────────────────── */
 
-  // Must match the stacked layout's condition in rail.css: in landscape the
-  // board and pool are side by side, so there is nothing to scroll between.
-  const stacked = useMediaQuery('(max-width: 900px) and (min-height: 561px), (max-width: 619px)')
-  // null means "not positioned yet", so the opening turn scrolls too — a game
-  // starts in the choosing phase with the pool below the fold.
-  const lastPhase = useRef<Phase | null>(null)
-
+  /*
+   * Acting on a cell or a piece disables it, and the browser drops focus to the
+   * body when that happens — which leaves a keyboard player tabbing in from the
+   * top of the page after every half-move. Focus is only ever *restored*, never
+   * taken: if it has landed somewhere real, this does nothing.
+   */
   useEffect(() => {
-    if (!stacked || showSetup || !localTurn) return
-    const changed = lastPhase.current !== phase
-    lastPhase.current = phase
-    if (!changed) return
-    // `nearest` does nothing when the target is already on screen, so this only
-    // moves the page on the smallest phones, where the layout cannot quite fit.
-    const target = phase === 'select' ? poolAreaRef.current : trayAreaRef.current
-    target?.scrollIntoView({
-      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      block: 'nearest',
-    })
-  }, [phase, stacked, showSetup, localTurn])
+    if (!followFocus.current || !localTurn || showSetup || showRules || confirmRestart) return
+    const active = document.activeElement
+    if (active && active !== document.body && active !== document.documentElement) return
+    const target = stageRef.current?.querySelector<HTMLElement>(
+      phase === 'place' ? '.cell[data-target]' : '.slot:not([disabled])',
+    )
+    if (!target) return
+    followFocus.current = false
+    target.focus({ preventScroll: true })
+  }, [state.ply, localTurn, phase, showSetup, showRules, confirmRestart])
 
   /* ── Outcome ──────────────────────────────────────────────────────────── */
 
@@ -218,10 +232,8 @@ export function App() {
       difficulty: prefs.difficulty,
       human: vsComputer ? 0 : null,
       names: vsComputer ? ['You', 'Computer'] : ['Player 1', 'Player 2'],
-      possessives: vsComputer ? ['your', 'the computer\u2019s'] : ['Player 1\u2019s', 'Player 2\u2019s'],
     })
     plannedGift.current = -1
-    lastPhase.current = null
     setThinking(false)
     setHistory([createGame(opener)])
     setShowSetup(false)
@@ -230,7 +242,6 @@ export function App() {
 
   const rematch = useCallback(() => {
     plannedGift.current = -1
-    lastPhase.current = null
     setThinking(false)
     setHistory([createGame(resolveOpener(prefs.opener))])
   }, [prefs.opener])
@@ -260,7 +271,7 @@ export function App() {
   /* ── New builds ───────────────────────────────────────────────────────── */
 
   useEffect(() => {
-    // On the setup screen there is no position to lose, so a waiting build is
+    // On the start screen there is no position to lose, so a waiting build is
     // taken silently. Mid-game it waits behind a quiet control instead — which
     // together means nobody can end up stranded on an old version.
     if (updateReady && showSetup) update()
@@ -295,23 +306,34 @@ export function App() {
   /* ── Copy ─────────────────────────────────────────────────────────────── */
 
   const names = session?.names ?? ['Player 1', 'Player 2']
-  const possessives = session?.possessives ?? ['Player 1\u2019s', 'Player 2\u2019s']
   const opponent = otherPlayer(state.turn)
+  /** "Your" for the person at the keyboard, "Computer’s" or "Player 1’s" otherwise. */
+  const possessive = (player: PlayerId) =>
+    session?.human === player ? 'Your' : `${names[player]}’s`
 
+  /**
+   * One line for the whole turn: who is acting, what they must do, and what
+   * happens straight afterwards — the question Quarto's split turn keeps
+   * raising, answered where the answer is needed rather than in a tutorial.
+   */
   const status = useMemo(() => {
     if (state.outcome) {
       return state.outcome.kind === 'win'
-        ? { actor: names[state.outcome.player], action: 'wins' }
-        : { actor: 'Draw', action: 'the board is full' }
+        ? { actor: names[state.outcome.player], action: 'wins', next: '' }
+        : { actor: 'Draw', action: '', next: '' }
     }
     if (isAiTurn) {
-      return { actor: names[state.turn], action: thinking ? 'is thinking' : 'is playing' }
+      return {
+        actor: names[state.turn],
+        action: thinking ? 'is thinking' : 'is playing',
+        next: '',
+      }
     }
-    return {
-      actor: names[state.turn],
-      action: phase === 'place' ? 'place this piece' : `choose ${possessives[opponent]} piece`,
-    }
-  }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, possessives, opponent])
+    const actor = session?.human === state.turn ? 'Your turn' : names[state.turn]
+    return phase === 'place'
+      ? { actor, action: 'to place', next: `Then choose a piece for ${names[opponent]}.` }
+      : { actor, action: 'to choose', next: `${names[opponent]} places it next.` }
+  }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, opponent, session])
 
   const announcement = useMemo(() => {
     if (state.outcome) {
@@ -331,139 +353,137 @@ export function App() {
         ? `Vs computer · ${session.difficulty[0].toUpperCase()}${session.difficulty.slice(1)}`
         : 'Two players'
 
-  // While the setup screen covers the game, `inert` keeps everything behind it
+  // While the start screen covers the game, `inert` keeps everything behind it
   // out of the tab order and the accessibility tree — aria-hidden alone would
   // still let a keyboard reach the controls.
   const covered = showSetup ? ({ inert: '' } as const) : {}
+
+  const choosing = phase === 'select'
 
   return (
     <div className="app">
       <PieceDefs />
 
       <div className="app__shell" {...covered}>
-      <header className="topbar">
-        <div className="topbar__left">
-          <span className="wordmark">Quarto</span>
-          {modeLabel && <span className="topbar__mode">{modeLabel}</span>}
-        </div>
-        <div className="topbar__right">
-          {updateReady && !showSetup && (
-            <button type="button" className="btn btn--quiet topbar__update" onClick={update}>
-              Update ready
-            </button>
-          )}
-          {canInstall && (
-            <button type="button" className="btn btn--quiet topbar__install" onClick={install}>
-              Install
-            </button>
-          )}
-          <button type="button" className="btn btn--quiet" onClick={() => setShowRules(true)}>
-            Rules
-          </button>
-          <button
-            type="button"
-            className="btn btn--quiet"
-            aria-label="Sound"
-            aria-pressed={prefs.sound}
-            onClick={() => setPrefs({ sound: !prefs.sound })}
-          >
-            {prefs.sound ? 'Sound' : 'Muted'}
-          </button>
-          <button type="button" className="btn" onClick={requestNewGame}>
-            New game
-          </button>
-        </div>
-      </header>
-
-      <p className="visually-hidden" role="status" aria-live="polite">
-        {announcement}
-      </p>
-
-      <main className="stage" data-over={state.outcome ? 'true' : undefined}>
-        <div className="stage__status">
-          <p className="status" data-live={localTurn ? 'true' : undefined}>
-            <span className="status__actor">{status.actor}</span>
-            <span className="status__action">{status.action}</span>
-            {isAiTurn && thinking && <span className="status__pulse" aria-hidden="true" />}
-          </p>
-
-          <div className="stage__status-end">
-            {!state.outcome && (
-              <ol className="phases" aria-hidden="true">
-                <li className="phases__step" data-on={phase === 'place' ? 'true' : undefined}>
-                  <span className="phases__rule" />
-                  <span className="phases__label">1 Place</span>
-                </li>
-                <li className="phases__step" data-on={phase === 'select' ? 'true' : undefined}>
-                  <span className="phases__rule" />
-                  <span className="phases__label">2 Choose</span>
-                </li>
-              </ol>
+        <header className="topbar">
+          <div className="topbar__left">
+            <span className="wordmark">Quarto</span>
+            {modeLabel && <span className="topbar__mode">{modeLabel}</span>}
+          </div>
+          <div className="topbar__right">
+            {updateReady && !showSetup && (
+              <button type="button" className="btn btn--quiet topbar__update" onClick={update}>
+                Update ready
+              </button>
             )}
+            {canInstall && (
+              <button type="button" className="btn btn--quiet topbar__install" onClick={install}>
+                Install
+              </button>
+            )}
+            <button type="button" className="btn btn--quiet" onClick={() => setShowRules(true)}>
+              Rules
+            </button>
+            <button
+              type="button"
+              className="btn btn--quiet btn--icon"
+              aria-label={prefs.sound ? 'Sound on' : 'Sound off'}
+              aria-pressed={prefs.sound}
+              title={prefs.sound ? 'Sound on' : 'Sound off'}
+              onClick={() => setPrefs({ sound: !prefs.sound })}
+            >
+              <SoundIcon on={prefs.sound} />
+            </button>
+            <button type="button" className="btn" onClick={requestNewGame}>
+              New game
+            </button>
+          </div>
+        </header>
+
+        <p className="visually-hidden" role="status" aria-live="polite">
+          {announcement}
+        </p>
+
+        <main className="stage" ref={stageRef} data-over={state.outcome ? 'true' : undefined}>
+          <div className="stage__status">
+            <p
+              className="status"
+              data-live={localTurn ? 'true' : undefined}
+              data-outcome={state.outcome ? 'true' : undefined}
+            >
+              <span className="status__line">
+                <span className="status__actor">{status.actor}</span>
+                {status.action && <span className="status__action">{status.action}</span>}
+                {isAiTurn && thinking && <span className="status__pulse" aria-hidden="true" />}
+              </span>
+              <span className="status__next">{status.next}</span>
+            </p>
+
             <button type="button" className="btn btn--quiet undo" onClick={undo} disabled={!canUndo}>
               Undo
             </button>
           </div>
-        </div>
 
-        {!state.outcome && (
-        <div className="stage__tray" ref={trayAreaRef}>
-          <HandTray
-            ref={trayRef}
-            piece={state.hand}
-            label="In hand"
-            description={
-              state.hand === null
-                ? 'No piece in hand'
-                : `In hand: piece for ${names[state.turn]} to place`
-            }
-            hidden={trayHidden}
-            armed={localTurn && phase === 'place'}
-          />
-        </div>
-        )}
-
-        <div className="stage__board">
-          <Board
-            board={state.board}
-            placing={localTurn && phase === 'place'}
-            lastPlaced={state.lastPlaced}
-            win={state.outcome?.kind === 'win' ? state.outcome.line : null}
-            onPlace={onPlace}
-          />
-        </div>
-
-        <div className="stage__pool" ref={poolAreaRef}>
-          {state.outcome && session ? (
-            <ResultPanel
-              outcome={state.outcome}
+          <div className="stage__board">
+            <Board
               board={state.board}
-              names={names}
-              onRematch={rematch}
-              onNewGame={() => setShowSetup(true)}
+              placing={localTurn && phase === 'place'}
+              lastPlaced={state.lastPlaced}
+              win={state.outcome?.kind === 'win' ? state.outcome.line : null}
+              onPlace={onPlace}
             />
-          ) : (
-            <section className="rail-section">
-              <div className="rail-section__head">
-                <p className="eyebrow" data-accent={localTurn && phase === 'select' ? 'true' : undefined}>
-                  {localTurn && phase === 'select' ? 'Hand one over' : 'Remaining'}
-                </p>
-                <p className="eyebrow rail-section__count">{state.pool.length}</p>
-              </div>
-              <Pool
-                pool={state.pool}
-                selecting={localTurn && phase === 'select'}
-                onSelect={onSelect}
-                slotRef={(piece, el) => {
-                  if (el) slotEls.current.set(piece, el)
-                  else slotEls.current.delete(piece)
-                }}
-              />
-            </section>
-          )}
-        </div>
-      </main>
+          </div>
 
+          <div className="stage__rail">
+            {!state.outcome && (
+              <div className="stage__tray">
+                <HandTray
+                  ref={trayRef}
+                  piece={state.hand}
+                  label={choosing ? `For ${names[opponent]}` : `${possessive(state.turn)} piece`}
+                  description={
+                    choosing
+                      ? `Empty. The piece chosen now goes to ${names[opponent]}.`
+                      : `In play: the ${describePiece(state.hand!)} piece, for ${names[state.turn]} to place`
+                  }
+                  hidden={trayHidden}
+                  armed={localTurn && phase === 'place'}
+                />
+              </div>
+            )}
+
+            <div className="stage__pool">
+              {state.outcome && session ? (
+                <ResultPanel
+                  outcome={state.outcome}
+                  onRematch={rematch}
+                  onNewGame={() => setShowSetup(true)}
+                />
+              ) : (
+                <section
+                  className="rail-section"
+                  data-armed={localTurn && choosing ? 'true' : undefined}
+                >
+                  <div className="rail-section__head">
+                    <p className="eyebrow" data-accent={localTurn && choosing ? 'true' : undefined}>
+                      Remaining
+                    </p>
+                    <p className="eyebrow rail-section__count">{state.pool.length}</p>
+                  </div>
+                  <Pool
+                    pool={state.pool}
+                    selecting={localTurn && choosing}
+                    onSelect={onSelect}
+                    slotRef={(piece, el) => {
+                      if (el) slotEls.current.set(piece, el)
+                      else slotEls.current.delete(piece)
+                    }}
+                  />
+                </section>
+              )}
+            </div>
+          </div>
+        </main>
       </div>
 
       {showSetup && (
@@ -483,21 +503,21 @@ export function App() {
 
       {confirmRestart && (
         <Modal title="Start a new game?" onClose={() => setConfirmRestart(false)} variant="confirm">
-          <h2 className="sheet__title">Abandon this game?</h2>
-          <p className="sheet__text">The current position will be lost.</p>
+          <h2 className="sheet__title">Start a new game?</h2>
+          <p className="sheet__text">This game will be lost.</p>
           <div className="sheet__actions">
-            <button type="button" className="btn" onClick={() => setConfirmRestart(false)}>
-              Keep playing
-            </button>
             <button
               type="button"
-              className="btn btn--primary"
+              className="btn"
               onClick={() => {
                 setConfirmRestart(false)
                 setShowSetup(true)
               }}
             >
               New game
+            </button>
+            <button type="button" className="btn btn--primary" onClick={() => setConfirmRestart(false)}>
+              Keep playing
             </button>
           </div>
         </Modal>

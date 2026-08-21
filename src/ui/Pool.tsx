@@ -3,8 +3,13 @@ import { POOL_ORDER, pieceLabel, type PieceId } from '../game'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { PieceGlyph } from './PieceGlyph'
 
-/** Must match the pool's grid in rail.css, or arrow keys move the wrong way. */
-const WIDE_COLUMNS = '(max-width: 900px) and (min-height: 561px), (max-width: 619px)'
+/**
+ * Must match the pool's grid in rail.css, or arrow keys move the wrong way.
+ * Eight across wherever height is the scarce dimension: upright phones and
+ * small tablets, and anything turned sideways.
+ */
+const WIDE_COLUMNS =
+  '(max-width: 900px) and (min-height: 561px), (max-width: 619px), (max-height: 560px) and (min-width: 620px)'
 
 export interface PoolProps {
   /** Pieces still available to hand over. */

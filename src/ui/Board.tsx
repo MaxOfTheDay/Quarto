@@ -55,18 +55,17 @@ export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) 
   }
 
   return (
-    <div className="board">
-      <div className="board__slab">
-        <div
-          ref={gridRef}
-          className="board__grid"
-          role="grid"
-          aria-label="Quarto board, 4 rows by 4 columns"
-        >
-          {win && <WinStroke win={win} />}
-          {Array.from({ length: SIZE }, (_, row) => (
-            <div className="board__row" role="row" key={row}>
-              {Array.from({ length: SIZE }, (_, col) => {
+    <div className="board__slab">
+      <div
+        ref={gridRef}
+        className="board__grid"
+        role="grid"
+        aria-label="Quarto board, 4 rows by 4 columns"
+      >
+        {win && <WinStroke win={win} />}
+        {Array.from({ length: SIZE }, (_, row) => (
+          <div className="board__row" role="row" key={row}>
+            {Array.from({ length: SIZE }, (_, col) => {
                 const cell = row * SIZE + col
                 const piece = board[cell]
                 const isWinner = winCells?.includes(cell) ?? false
@@ -117,9 +116,8 @@ export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) 
                   </div>
                 )
               })}
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   )

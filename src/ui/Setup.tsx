@@ -1,3 +1,4 @@
+import { useId, useRef } from 'react'
 import { HEIGHT, SHAPE, TONE, TOP } from '../game'
 import type { Difficulty } from '../game/ai'
 import type { Mode, Opener, Prefs } from '../lib/prefs'
@@ -19,6 +20,11 @@ interface Choice<T> {
   label: string
 }
 
+/**
+ * A radio group that behaves like one: arrow keys move the selection, and only
+ * the chosen option is a tab stop, so the whole group is a single step through
+ * the form rather than three.
+ */
 function Segmented<T extends string>({
   label,
   value,
@@ -30,19 +36,44 @@ function Segmented<T extends string>({
   options: Choice<T>[]
   onChange: (value: T) => void
 }) {
+  const id = useId()
+  const groupRef = useRef<HTMLDivElement>(null)
+
+  const moveTo = (index: number) => {
+    const next = options[(index + options.length) % options.length]
+    onChange(next.value)
+    groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]')[
+      (index + options.length) % options.length
+    ]?.focus()
+  }
+
+  const onKeyDown = (event: React.KeyboardEvent, index: number) => {
+    const step =
+      event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? -1
+        : event.key === 'ArrowRight' || event.key === 'ArrowDown'
+          ? 1
+          : 0
+    if (step === 0) return
+    event.preventDefault()
+    moveTo(index + step)
+  }
+
   return (
     <div className="field">
-      <span className="eyebrow field__label" id={`field-${label}`}>
+      <span className="eyebrow field__label" id={id}>
         {label}
       </span>
-      <div className="segmented" role="radiogroup" aria-labelledby={`field-${label}`}>
-        {options.map((option) => (
+      <div className="segmented" role="radiogroup" aria-labelledby={id} ref={groupRef}>
+        {options.map((option, index) => (
           <button
             key={option.value}
             type="button"
             role="radio"
             aria-checked={value === option.value}
+            tabIndex={value === option.value ? 0 : -1}
             className="segmented__option"
+            onKeyDown={(e) => onKeyDown(e, index)}
             onClick={() => onChange(option.value)}
           >
             {option.label}
@@ -81,15 +112,11 @@ export function Setup({ prefs, onChange, onStart, onRules, onInstall, onDismiss 
             <ol className="primer__list">
               <li>
                 <span className="primer__num">1</span>
-                <span>
-                  Your opponent chooses the piece you place — and then you choose theirs.
-                </span>
+                <span>Your opponent chooses the piece you place — then you choose theirs.</span>
               </li>
               <li>
                 <span className="primer__num">2</span>
-                <span>
-                  Four in a line sharing any one attribute wins, whoever placed them.
-                </span>
+                <span>Four in a line sharing any one attribute wins, whoever placed them.</span>
               </li>
             </ol>
             <div className="primer__pieces" aria-hidden="true">
@@ -125,7 +152,7 @@ export function Setup({ prefs, onChange, onStart, onRules, onInstall, onDismiss 
           )}
 
           <Segmented<Opener>
-            label="Who chooses first"
+            label="Chooses first"
             value={prefs.opener}
             onChange={(opener) => onChange({ opener })}
             options={openerOptions}
@@ -133,7 +160,7 @@ export function Setup({ prefs, onChange, onStart, onRules, onInstall, onDismiss 
         </div>
 
         <footer className="setup__foot">
-          <button type="button" className="btn btn--primary" onClick={onStart}>
+          <button type="button" className="btn btn--primary btn--lg" onClick={onStart}>
             Begin
           </button>
           <div className="setup__links">

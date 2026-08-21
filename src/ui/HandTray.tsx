@@ -4,6 +4,7 @@ import { PieceGlyph } from './PieceGlyph'
 
 export interface HandTrayProps {
   piece: PieceId | null
+  /** Whose piece it is, or who the next one is for. */
   label: string
   /** Read out to assistive tech in place of the visual shelf. */
   description: string
@@ -13,10 +14,15 @@ export interface HandTrayProps {
 }
 
 /**
- * The piece your opponent handed you, set on its own shelf so it never reads as
- * part of the pool. Its four attributes are spelled out underneath — the one
- * place in the game where naming them matters, and the reason tone never has to
- * carry meaning on its own.
+ * The piece in play, set on its own shelf so it never reads as part of the
+ * pool. Its four attributes are spelled out underneath — the one place in the
+ * game where naming them matters, and the reason tone never has to carry
+ * meaning on its own.
+ *
+ * The shelf keeps its size in both phases. While its owner is choosing it holds
+ * the empty socket the next piece lands in, which is both honest — that is
+ * exactly where the chosen piece flies to — and what stops the board and the
+ * pool shifting on every half-move.
  */
 export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function HandTray(
   { piece, label, description, hidden, armed },
@@ -37,7 +43,12 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
 
       <div className="tray__shelf">
         {piece !== null ? (
-          <span ref={ref} className="tray__piece" data-hidden={hidden ? 'true' : undefined} key={piece}>
+          <span
+            ref={ref}
+            className="tray__piece"
+            data-hidden={hidden ? 'true' : undefined}
+            key={piece}
+          >
             <PieceGlyph piece={piece} className="piece" />
           </span>
         ) : (

@@ -3,11 +3,15 @@ import type { Prefs } from '../lib/prefs'
 import { Modal } from './Modal'
 import { PieceGlyph } from './PieceGlyph'
 
+/**
+ * Each pair changes exactly one attribute from the same tall, light, round,
+ * solid piece — which is what makes the difference readable at this size.
+ */
 const AXES = [
   { label: 'Height', a: 0, b: HEIGHT, note: 'short / tall' },
-  { label: 'Tone', a: 0, b: TONE, note: 'light / dark' },
-  { label: 'Section', a: 0, b: SHAPE, note: 'round / square' },
-  { label: 'Top', a: 0, b: TOP, note: 'solid / hollow' },
+  { label: 'Tone', a: HEIGHT, b: HEIGHT | TONE, note: 'light / dark' },
+  { label: 'Shape', a: HEIGHT, b: HEIGHT | SHAPE, note: 'round / square' },
+  { label: 'Top', a: HEIGHT, b: HEIGHT | TOP, note: 'solid / hollow' },
 ]
 
 const SHORTCUTS = [
@@ -54,7 +58,7 @@ function Toggle({
 
 export function RulesSheet({ prefs, onChange, onClose }: RulesSheetProps) {
   return (
-    <Modal title="How to play Quarto" onClose={onClose} variant="rules">
+    <Modal title="How to play" onClose={onClose} variant="rules">
       <header className="sheet__head">
         <h2 className="sheet__title">How to play</h2>
         <button type="button" className="btn btn--quiet sheet__close" onClick={onClose}>
@@ -64,10 +68,10 @@ export function RulesSheet({ prefs, onChange, onClose }: RulesSheetProps) {
 
       <div className="sheet__body">
         <section className="rule">
-          <p className="eyebrow">The twist</p>
+          <p className="eyebrow">The turn</p>
           <p className="rule__lead">
-            You never choose your own piece. Your opponent hands you one, you place it, then you
-            choose theirs.
+            You never choose your own piece. Your opponent chooses it for you, you place it, then
+            you choose theirs.
           </p>
         </section>
 
@@ -77,7 +81,10 @@ export function RulesSheet({ prefs, onChange, onClose }: RulesSheetProps) {
             Four in a row — across, down or diagonally — sharing any one attribute wins. It does not
             matter who placed them.
           </p>
-          <div className="rule__demo" aria-label="Four different pieces that all share one attribute: hollow">
+          <div
+            className="rule__demo"
+            aria-label="Four different pieces that all share one attribute: hollow"
+          >
             {[TOP, TOP | HEIGHT, TOP | TONE | SHAPE, TOP | SHAPE].map((p, i) => (
               <span className="rule__demo-cell" key={i}>
                 <PieceGlyph piece={p} className="piece" />
@@ -88,7 +95,7 @@ export function RulesSheet({ prefs, onChange, onClose }: RulesSheetProps) {
         </section>
 
         <section className="rule">
-          <p className="eyebrow">The four attributes</p>
+          <p className="eyebrow">The pieces</p>
           <ul className="axes">
             {AXES.map((axis) => (
               <li className="axis" key={axis.label}>
@@ -113,7 +120,7 @@ export function RulesSheet({ prefs, onChange, onClose }: RulesSheetProps) {
           <div className="toggles">
             <Toggle
               label="Sound"
-              hint="Placement, passing and the win"
+              hint="Placing, choosing and the win"
               on={prefs.sound}
               onToggle={() => onChange({ sound: !prefs.sound })}
             />

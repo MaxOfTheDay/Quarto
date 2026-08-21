@@ -5,15 +5,16 @@
   --paper: #e9e3d7;
   --paper-deep: #e2dbcc;
   --paper-sunk: #d8cfbd;
+  --paper-raised: #fbf7ef;
 
   --ink: #1f1a15;
-  --ink-2: #554c41;
-  --ink-3: #6a6053;
+  --ink-2: #4f463c;
+  --ink-3: #635a4d;
   --hairline: rgba(31, 26, 21, 0.13);
   --hairline-strong: rgba(31, 26, 21, 0.24);
 
   /* One accent, used only for "it is your move on this thing". */
-  --accent: #ab4523;
+  --accent: #a2401f;
   --accent-warm: #d9663a;
   --accent-lift: rgba(171, 69, 35, 0.12);
 
@@ -27,6 +28,7 @@
 
   --shadow-sm: 0 1px 2px rgba(41, 31, 20, 0.14);
   --shadow-md: 0 2px 6px rgba(41, 31, 20, 0.12), 0 8px 20px -8px rgba(41, 31, 20, 0.28);
+  --shadow-lg: 0 1px 2px rgba(33, 26, 18, 0.2), 0 24px 60px -18px rgba(33, 26, 18, 0.5);
   --shadow-slab:
     0 1px 1px rgba(33, 26, 18, 0.3),
     0 10px 22px -10px rgba(33, 26, 18, 0.45),
@@ -34,6 +36,16 @@
 
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+
+  /* One radius scale. Small for controls, medium for surfaces, and the slab —
+     a physical object — keeps the only larger value. */
+  --r-sm: 3px;
+  --r-md: 6px;
+  --r-slab: 8px;
+
+  /* Every control in the app is one of these two heights. */
+  --ctl-h: 36px;
+  --ctl-h-lg: 44px;
 
   --ease-out: cubic-bezier(0.22, 0.68, 0.28, 1);
   --ease-settle: cubic-bezier(0.16, 0.9, 0.28, 1);
@@ -45,6 +57,27 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
+
+  /* Page inset. The top bar and the game share it, so the whole page has one
+     left edge instead of two. */
+  --gutter: 24px;
+
+  /*
+   * The composition's own measurements. They live here rather than on the
+   * stage because the top bar is held to exactly the width the board and the
+   * rail come to — which is what gives the page a single left and right edge
+   * instead of a bar floating above a game of its own size.
+   */
+  --rail-w: clamp(232px, 24vw, 296px);
+  --stage-gap-x: clamp(24px, 4vw, 56px);
+  --board-max: 560px;
+  /* Everything above and below the board on this layout, rounded up. */
+  --chrome-h: 210px;
+  --board-size: min(
+    var(--board-max),
+    max(180px, calc(100dvh - var(--safe-t) - var(--safe-b) - var(--chrome-h)))
+  );
+  --frame: calc(var(--board-size) + var(--stage-gap-x) + var(--rail-w));
 }
 
 /* Both the OS preference and the in-app switch collapse motion to nothing. */
@@ -107,7 +140,10 @@ body {
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  /* The game is sized to the viewport and never scrolls; the start screen and
+     the dialogs are fixed layers that scroll inside themselves. */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* A whisper of tooth in the paper, so the ground is not a flat fill. */
@@ -138,7 +174,7 @@ svg {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 2px;
+  border-radius: var(--r-sm);
 }
 
 .visually-hidden {
@@ -157,10 +193,15 @@ svg {
 .eyebrow {
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.17em;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
   text-transform: uppercase;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
+}
+
+.eyebrow[data-accent='true'] {
+  color: var(--accent);
 }
 
 .wordmark {
@@ -178,12 +219,13 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 34px;
+  height: var(--ctl-h);
   padding: 0 14px;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
+  white-space: nowrap;
   color: var(--ink-2);
   border: 1px solid var(--hairline);
   background: linear-gradient(180deg, rgba(255, 253, 247, 0.7), rgba(255, 253, 247, 0.24));
@@ -191,21 +233,23 @@ svg {
     background var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
 }
 
 .btn:hover:not(:disabled) {
   color: var(--ink);
   border-color: var(--hairline-strong);
-  background: rgba(255, 253, 247, 0.9);
+  background: var(--paper-raised);
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(1px);
 }
 
+/* Faint enough to read as unavailable, solid enough to still be legible. */
 .btn:disabled {
-  opacity: 0.38;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -213,8 +257,7 @@ svg {
   color: var(--paper);
   background: var(--ink);
   border-color: var(--ink);
-  height: 40px;
-  padding: 0 22px;
+  padding: 0 20px;
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -234,19 +277,51 @@ svg {
   border-color: var(--hairline);
 }
 
+/* The one size step: the start screen's single commitment, and nothing else. */
+.btn--lg {
+  height: var(--ctl-h-lg);
+  padding: 0 24px;
+  font-size: 14px;
+}
+
+/* A square control that holds a glyph rather than a word. */
+.btn--icon {
+  width: var(--ctl-h);
+  padding: 0;
+}
+
+.btn--icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Fingers need more than a mouse does, and the top bar is the tightest row. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: var(--ctl-h-lg);
+  }
+  .btn--icon {
+    width: var(--ctl-h-lg);
+  }
+}
+
 /* Segmented choice: a hairline frame divided into cells, no pills. */
 .segmented {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   border: 1px solid var(--hairline-strong);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   overflow: hidden;
   background: rgba(255, 253, 247, 0.5);
 }
 
 .segmented__option {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ctl-h);
+  padding: 6px 12px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-2);
@@ -257,8 +332,19 @@ svg {
   white-space: nowrap;
 }
 
+@media (pointer: coarse) {
+  .segmented__option {
+    min-height: var(--ctl-h-lg);
+  }
+}
+
 .segmented__option:last-child {
   border-right: none;
+}
+
+/* The frame clips, so the ring has to sit inside the cell to survive. */
+.segmented__option:focus-visible {
+  outline-offset: -3px;
 }
 
 .segmented__option:hover:not([aria-checked='true']) {
@@ -287,17 +373,24 @@ svg {
 
 /* ── App frame ───────────────────────────────────────────────────────────── */
 
+/*
+ * The game is a fixed composition, not a document: it is sized to the viewport
+ * and never scrolls. Everything that has to give way when the screen is short
+ * gives way inside the stage, and the board absorbs what is left.
+ */
 .app {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   padding:
-    calc(var(--safe-t) + 14px)
-    calc(var(--safe-r) + 24px)
-    calc(var(--safe-b) + 24px)
-    calc(var(--safe-l) + 24px);
+    calc(var(--safe-t) + 12px)
+    calc(var(--safe-r) + var(--gutter))
+    calc(var(--safe-b) + 16px)
+    calc(var(--safe-l) + var(--gutter));
 }
 
 .app__shell {
@@ -307,14 +400,23 @@ svg {
   min-height: 0;
 }
 
+/*
+ * The top bar shares the game's width so the page has a single left edge. The
+ * stage publishes its own composition width; before a game exists there is no
+ * composition to match, and the bar simply fills the page.
+ */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 13px;
+  width: 100%;
+  max-width: var(--frame);
+  margin-inline: auto;
+  padding-bottom: 11px;
+  margin-bottom: clamp(14px, 2.6vh, 32px);
   border-bottom: 1px solid var(--hairline);
-  margin-bottom: clamp(18px, 3.4vh, 40px);
+  flex-shrink: 0;
 }
 
 .topbar__left {
@@ -350,10 +452,35 @@ svg {
   flex-shrink: 0;
 }
 
+/* Upright phones and small tablets: the game is a single column, and the bar
+   is held to the same column so the page keeps one left edge. */
+@media (max-width: 900px) and (min-height: 561px), (max-width: 619px) {
+  :root {
+    /* Status, tray, pool header and the pool itself all sit above or below the
+       board here, so the board's height budget is much smaller. */
+    --chrome-h: 412px;
+    --frame: 520px;
+  }
+}
+
+@media (max-width: 400px) {
+  :root {
+    --chrome-h: 368px;
+  }
+}
+
+/* Turned sideways there is almost no height and a great deal of width, so the
+   rail takes whatever the board does not need. */
+@media (max-height: 560px) and (min-width: 620px) {
+  :root {
+    --chrome-h: 168px;
+    --frame: none;
+  }
+}
+
 @media (max-width: 560px) {
-  .app {
-    padding-left: calc(var(--safe-l) + 16px);
-    padding-right: calc(var(--safe-r) + 16px);
+  :root {
+    --gutter: 16px;
   }
   .topbar__mode {
     display: none;
@@ -372,8 +499,8 @@ svg {
   flex-shrink: 0;
 }
 
-@media (max-width: 700px) {
-  /* Too little room in the bar; the setup screen carries the install action. */
+@media (max-width: 760px) {
+  /* Too little room in the bar; the start screen carries the install action. */
   .topbar__install {
     display: none;
   }
