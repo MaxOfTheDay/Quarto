@@ -277,6 +277,13 @@ svg {
   border-color: var(--hairline);
 }
 
+/* Quiet buttons sit hard against the edges of the page and of dialogs, where a
+   ring drawn outside them would be clipped. On the inside it also traces the
+   same footprint the hover background does. */
+.btn--quiet:focus-visible {
+  outline-offset: -3px;
+}
+
 /* The one size step: the start screen's single commitment, and nothing else. */
 .btn--lg {
   height: var(--ctl-h-lg);

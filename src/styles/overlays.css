@@ -394,7 +394,6 @@
 }
 
 .sheet__close {
-  margin-right: -10px;
   flex-shrink: 0;
 }
 

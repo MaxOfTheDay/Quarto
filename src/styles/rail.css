@@ -169,9 +169,11 @@
   animation: pulse 1.15s var(--ease-out) infinite;
 }
 
+/* The box sits on the frame's right edge, as the top bar's last button does;
+   pulling the label out to the edge instead put the control — and its focus
+   ring — outside the stage, which clips. */
 .undo {
   flex-shrink: 0;
-  margin-right: -10px;
   color: var(--ink-3);
 }
 
@@ -210,7 +212,7 @@
   align-items: flex-end;
   justify-content: center;
   height: 94px;
-  border-bottom: 1px solid var(--hairline-strong);
+  border-bottom: 1px solid var(--hairline);
   transition: border-color var(--dur) var(--ease-out);
 }
 
@@ -284,7 +286,6 @@
   grid-area: attrs;
   display: flex;
   flex-wrap: nowrap;
-  justify-content: center;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.13em;
@@ -317,7 +318,7 @@
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--hairline-strong);
+  border-bottom: 1px solid var(--hairline);
   transition: border-color var(--dur) var(--ease-out);
   flex-shrink: 0;
 }
@@ -536,10 +537,6 @@
     align-self: end;
   }
 
-  .tray__attrs {
-    justify-content: flex-start;
-  }
-
   .tray__shelf {
     width: 84px;
     height: 60px;
@@ -669,10 +666,6 @@
 
   .tray__label {
     align-self: end;
-  }
-
-  .tray__attrs {
-    justify-content: flex-start;
   }
 
   .tray__shelf {
