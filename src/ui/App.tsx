@@ -331,8 +331,8 @@ export function App() {
     }
     const actor = session?.human === state.turn ? 'Your turn' : names[state.turn]
     return phase === 'place'
-      ? { actor, action: 'to place', next: `Then choose a piece for ${names[opponent]}.` }
-      : { actor, action: 'to choose', next: `${names[opponent]} places it next.` }
+      ? { actor, action: 'to place this piece', next: `Then choose a piece for ${names[opponent]}.` }
+      : { actor, action: 'to choose a piece', next: `${names[opponent]} places it next.` }
   }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, opponent, session])
 
   const announcement = useMemo(() => {

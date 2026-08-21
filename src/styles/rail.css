@@ -521,8 +521,13 @@
     font-size: 16px;
   }
 
-  /* The shelf sits beside its label rather than above it: the same information
-     in half the height, which is what lets both phases fit on one screen. */
+  /*
+   * The shelf sits beside its label rather than above it: the same information
+   * in half the height, which is what lets both phases fit on one screen. The
+   * rule runs under the whole block, so the piece and its description stand on
+   * one shelf — and an empty shelf reads as a shelf rather than as a stub of a
+   * line under nothing.
+   */
   .tray {
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
@@ -531,10 +536,20 @@
     align-items: end;
     column-gap: 16px;
     row-gap: 3px;
+    border-bottom: 1px solid var(--hairline);
+    transition: border-color var(--dur) var(--ease-out);
+  }
+
+  .tray[data-armed='true'] {
+    border-bottom-color: var(--accent);
   }
 
   .tray__label {
     align-self: end;
+  }
+
+  .tray__shelf {
+    border-bottom: none;
   }
 
   .tray__shelf {
@@ -652,8 +667,13 @@
     font-size: 25px;
   }
 
-  /* The shelf sits beside its label rather than above it: the same information
-     in half the height, which is what lets both phases fit on one screen. */
+  /*
+   * The shelf sits beside its label rather than above it: the same information
+   * in half the height, which is what lets both phases fit on one screen. The
+   * rule runs under the whole block, so the piece and its description stand on
+   * one shelf — and an empty shelf reads as a shelf rather than as a stub of a
+   * line under nothing.
+   */
   .tray {
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
@@ -662,10 +682,20 @@
     align-items: end;
     column-gap: 16px;
     row-gap: 3px;
+    border-bottom: 1px solid var(--hairline);
+    transition: border-color var(--dur) var(--ease-out);
+  }
+
+  .tray[data-armed='true'] {
+    border-bottom-color: var(--accent);
   }
 
   .tray__label {
     align-self: end;
+  }
+
+  .tray__shelf {
+    border-bottom: none;
   }
 
   .tray__shelf {

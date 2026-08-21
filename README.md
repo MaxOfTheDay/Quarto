@@ -91,7 +91,7 @@ Game logic is kept entirely out of the components.
 src/game/          the domain — no React anywhere in here
   pieces.ts        the sixteen pieces as four attribute bits
   board.ts         lines, win detection, threat detection
-  engine.ts        turn state machine (place → choose → hand over)
+  engine.ts        turn state machine (place, then choose for the opponent)
   ai/position.ts   fast mutable board with incremental line state
   ai/search.ts     negamax + alpha-beta, transposition table, iterative deepening
   ai/index.ts      the three difficulties
@@ -108,6 +108,25 @@ pointless update prompts) and any change at all produces a different one (no
 stale installs). Its paths are relative to its own URL, so it works under any
 base without one being compiled in.
 
+### Fitting the screen
+
+The game is a composition sized to the viewport, not a document: nothing
+scrolls, and the board takes whatever room the rest of it leaves. Whose turn it
+is has to stay visible at every moment, which a scrolling page cannot promise.
+
+`--chrome-h` in `base.css` is the height everything other than the board takes
+on a given layout — top bar, status, tray, pool. `--board-size` is what is left
+after it, capped at 560px, and `--frame` is the width the board and the rail
+come to together, which the top bar is held to as well so the page has a single
+left and right edge. Three arrangements share those tokens: board beside a rail,
+board over a rail on an upright phone, and a wide rail beside a short board when
+a phone is turned sideways.
+
+Changing anything above or below the board means re-checking `--chrome-h`. The
+end-to-end suite asserts, at every size it tests, that neither the page nor the
+stage scrolls, that the turn state is on screen before and after a move, and
+that the whole pool is visible.
+
 ### Win detection
 
 A piece is an integer 0–15, one bit per attribute. Four pieces share an
@@ -117,7 +136,7 @@ running AND of both, so checking a placement is a handful of bitwise operations.
 
 ### The computer
 
-Depth counts whole turns — place a piece, then hand one over — searched with
+Depth counts whole turns — place a piece, then choose the opponent’s — searched with
 negamax and alpha-beta. Two shortcuts do most of the pruning:
 
 - if the piece in hand completes a line anywhere, that is the move;
