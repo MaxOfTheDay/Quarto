@@ -185,22 +185,17 @@
     background var(--dur) var(--ease-out);
 }
 
-.cell[data-target] .cell__target {
+/*
+ * The dot and the ghost say the same thing — "your piece can go here" — so a
+ * cell shows one or the other, never both. The condition lives in the selector
+ * rather than in a later override because the stagger is an animation, and an
+ * animation outranks any ordinary declaration trying to switch it off.
+ */
+.cell[data-target]:not([data-ghost='true']) .cell__target {
   opacity: 0.6;
   transform: translate(-50%, -50%) scale(1);
-  animation: target-in var(--dur) var(--ease-settle) both;
+  animation: target-in var(--dur) var(--ease-settle) backwards;
   animation-delay: calc(var(--target-index) * 22ms);
-}
-
-.cell[data-target]:hover .cell__target,
-.cell[data-target]:focus-visible .cell__target {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.9);
-}
-
-/* The ghost says everything the dot was saying, and says it better. */
-.cell[data-ghost='true'] .cell__target {
-  opacity: 0;
 }
 
 .cell[data-target]:hover .cell__socket,
@@ -234,7 +229,7 @@
   }
 }
 
-.cell[data-wins='true'] .cell__target {
+.cell[data-wins='true']:not([data-ghost='true']) .cell__target {
   width: 26%;
   opacity: 0.9;
   background: radial-gradient(circle, var(--accent-warm) 38%, rgba(217, 102, 58, 0) 72%);
@@ -286,21 +281,19 @@
 /* ── The move just played ────────────────────────────────────────────────── */
 
 /*
- * A corner tick on the socket the last piece landed in. In the warm highlight
+ * The pocket the last piece landed in, still warm. An L-shaped tick floating in
+ * the corner read as a rendering fault rather than as a mark; a rim on the
+ * socket itself belongs to the object it is describing. In the warm highlight
  * rather than the accent, so it never competes with a target for the meaning
  * "act here" — it says "this happened", which is what you want to know when a
  * board comes back to you.
  */
-.cell[data-last='true'] .cell__socket::after {
-  content: '';
-  position: absolute;
-  top: 7%;
-  right: 7%;
-  width: 12%;
-  aspect-ratio: 1;
-  border-top: 1.5px solid rgba(255, 220, 172, 0.55);
-  border-right: 1.5px solid rgba(255, 220, 172, 0.55);
-  border-top-right-radius: 2px;
+.cell[data-last='true'] .cell__socket {
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 206, 150, 0.34),
+    inset 0 3px 6px rgba(0, 0, 0, 0.72),
+    inset 0 -1px 0 rgba(255, 220, 172, 0.06),
+    0 1px 0 rgba(255, 228, 188, 0.1);
 }
 
 /* ── The piece you are about to place ────────────────────────────────────── */

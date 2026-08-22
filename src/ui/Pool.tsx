@@ -89,7 +89,6 @@ export function Pool({ pool, selecting, hot, onSelect, onPreview, onRefuse, slot
             data-piece={piece}
             className="slot"
             data-state={available ? 'available' : 'spent'}
-            data-hot={risky ? 'true' : undefined}
             /*
              * `aria-disabled`, not `disabled`: which pieces are left is exactly
              * what a player reads while planning, including in the half of the
@@ -119,7 +118,6 @@ export function Pool({ pool, selecting, hot, onSelect, onPreview, onRefuse, slot
                 <PieceGlyph piece={piece} className="piece" crop />
               </span>
             )}
-            {risky && <span className="slot__warn" aria-hidden="true" />}
           </button>
         )
       })}

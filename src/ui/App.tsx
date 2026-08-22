@@ -144,10 +144,28 @@ export function App() {
     })
   }, [])
 
+  /*
+   * Whether to hand focus on to the next surface. Clicking a button focuses it
+   * too, so "focus is inside the stage" was true for mouse play as well — which
+   * moved focus to the first open cell after every click and painted a ghost
+   * piece there that nobody had pointed at. `:focus-visible` is exactly the
+   * distinction the browser already draws: it matches when the focus came from
+   * the keyboard, and not when it came from a pointer.
+   */
+  const keyboardPlay = () => {
+    const active = document.activeElement
+    if (!active || !stageRef.current?.contains(active)) return false
+    try {
+      return active.matches(':focus-visible')
+    } catch {
+      return false
+    }
+  }
+
   const onPlace = useCallback(
     (cell: number) => {
       if (!localTurn || phase !== 'place') return
-      followFocus.current = stageRef.current?.contains(document.activeElement) ?? false
+      followFocus.current = keyboardPlay()
       play('place')
       commitPlace(cell)
     },
@@ -158,7 +176,7 @@ export function App() {
     (piece: PieceId) => {
       const source = slotEls.current.get(piece)
       pendingPass.current = source?.getBoundingClientRect() ?? null
-      followFocus.current = stageRef.current?.contains(document.activeElement) ?? false
+      followFocus.current = keyboardPlay()
       setPreview(null)
       play('select')
       commitSelect(piece)

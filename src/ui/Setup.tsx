@@ -33,13 +33,11 @@ function Segmented<T extends string>({
   label,
   value,
   options,
-  hint,
   onChange,
 }: {
   label: string
   value: T
   options: Choice<T>[]
-  hint?: string
   onChange: (value: T) => void
 }) {
   const id = useId()
@@ -70,51 +68,24 @@ function Segmented<T extends string>({
       <span className="eyebrow field__label" id={id}>
         {label}
       </span>
-      <div className="field__control">
-        <div className="segmented" role="radiogroup" aria-labelledby={id} ref={groupRef}>
-          {options.map((option, index) => (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={value === option.value}
-              tabIndex={value === option.value ? 0 : -1}
-              className="segmented__option"
-              onKeyDown={(e) => onKeyDown(e, index)}
-              onClick={() => onChange(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {hint && <p className="field__hint">{hint}</p>}
+      <div className="segmented" role="radiogroup" aria-labelledby={id} ref={groupRef}>
+        {options.map((option, index) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={value === option.value}
+            tabIndex={value === option.value ? 0 : -1}
+            className="segmented__option"
+            onKeyDown={(e) => onKeyDown(e, index)}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   )
-}
-
-/**
- * The one genuinely counter-intuitive setting in the game: whoever goes first
- * hands a piece over, they do not place one. Saying which side then places is
- * the whole point of the line.
- */
-function openerHint(opener: Opener, vsComputer: boolean): string {
-  if (opener === 'random') return 'Decided when the game starts.'
-  if (vsComputer) {
-    return opener === 'p1'
-      ? 'You pick the opening piece; the computer places it.'
-      : 'The computer picks the opening piece; you place it.'
-  }
-  return opener === 'p1'
-    ? 'Player 1 picks the opening piece; Player 2 places it.'
-    : 'Player 2 picks the opening piece; Player 1 places it.'
-}
-
-/** What each computer actually does, in its own words. */
-const DIFFICULTY_HINT: Record<Difficulty, string> = {
-  easy: 'Never looks ahead. Misses about a third of its wins.',
-  medium: 'Looks two turns ahead.',
-  hard: 'Searches until its time runs out. Rarely loses.',
 }
 
 export function Setup({
@@ -160,7 +131,6 @@ export function Setup({
         <Segmented<Difficulty>
           label="Difficulty"
           value={prefs.difficulty}
-          hint={DIFFICULTY_HINT[prefs.difficulty]}
           onChange={(difficulty) => onChange({ difficulty })}
           options={[
             { value: 'easy', label: 'Easy' },
@@ -170,10 +140,11 @@ export function Setup({
         />
       )}
 
+      {/* Named so it explains itself: "Picks first piece — You" needs no line
+          of help underneath it the way "Hands over first" did. */}
       <Segmented<Opener>
-        label="Hands over first"
+        label="Picks first piece"
         value={prefs.opener}
-        hint={openerHint(prefs.opener, vsComputer)}
         onChange={(opener) => onChange({ opener })}
         options={openerOptions}
       />
@@ -185,21 +156,20 @@ export function Setup({
       <div className="setup__inner">
         <header className="setup__head">
           <h1 className="setup__title">Quarto</h1>
-          <p className="setup__tagline">Sixteen pieces. Four attributes. One shared line.</p>
         </header>
 
+        {/*
+          * One sentence and one picture. The screen used to say the win
+          * condition three times over — a tagline, a numbered rule and the
+          * picture's own caption — and state the split turn twice. The
+          * sentence is the half nobody guesses; the picture is the half no
+          * sentence explains as well.
+          */}
         {!prefs.seenIntro && (
           <section className="primer" aria-label="How Quarto works">
-            <ol className="primer__list">
-              <li>
-                <span className="primer__num">1</span>
-                <span>Your opponent chooses the piece you place — then you choose theirs.</span>
-              </li>
-              <li>
-                <span className="primer__num">2</span>
-                <span>Four in a line sharing any one attribute wins, whoever placed them.</span>
-              </li>
-            </ol>
+            <p className="primer__lead">
+              Your opponent picks the piece you place. You pick theirs.
+            </p>
             <QuartoDemo />
           </section>
         )}
@@ -255,7 +225,6 @@ export function Setup({
           </div>
         </footer>
 
-        <p className="setup__offline">Plays offline. Nothing is sent anywhere.</p>
       </div>
     </div>
   )

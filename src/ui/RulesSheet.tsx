@@ -28,14 +28,25 @@ export interface RulesSheetProps {
   onClose: () => void
 }
 
-/** The four pieces that share one attribute — the game in a single picture. */
-export function QuartoDemo({ note = 'All four are hollow — that is a Quarto.' }: { note?: string }) {
+/**
+ * The four pieces that share one attribute — the game in a single picture.
+ *
+ * They share tone, and differ in every other way. Hollow was the wrong choice
+ * for the shared one: it is a small dark hole in the top face, which is the
+ * least visible attribute at this size, so the picture asked the reader to take
+ * its caption on trust. Light against dark is the one nobody can miss.
+ */
+const DEMO = [
+  TONE, // short round solid
+  TONE | HEIGHT | TOP, // tall round hollow
+  TONE | HEIGHT | SHAPE, // tall square solid
+  TONE | SHAPE | TOP, // short square hollow
+]
+
+export function QuartoDemo({ note = 'All four are dark — that is a Quarto.' }: { note?: string }) {
   return (
-    <div
-      className="demo"
-      aria-label="Four different pieces that all share one attribute: hollow"
-    >
-      {[TOP, TOP | HEIGHT, TOP | TONE | SHAPE, TOP | SHAPE].map((p, i) => (
+    <div className="demo" aria-label="Four different pieces that are all dark">
+      {DEMO.map((p, i) => (
         <span className="demo__cell" key={i}>
           <PieceGlyph piece={p} className="piece" />
         </span>

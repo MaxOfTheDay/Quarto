@@ -524,29 +524,16 @@
 }
 
 /*
- * A piece that finishes a line for the other side. Cool where the accent is
- * warm, and marked by a corner flag as well as a tint, so it never depends on
- * colour alone — and so it can never be read as "choose this one".
+ * A piece that finishes a line for the other side carries no badge of its own.
+ * Half the pool can be dangerous at once, and eight small flags scattered over
+ * the tray read as dust on the screen rather than as a warning — they were the
+ * noisiest thing in the game.
+ *
+ * The warning belongs where the decision is: pointing at a piece says so on the
+ * shelf, in words, and committing to one asks first. Both arrive at the moment
+ * the player is actually about to make the mistake, which is also the moment
+ * they are able to learn from it.
  */
-.slot[data-hot='true'] {
-  background: linear-gradient(180deg, var(--tray-face), var(--danger-lift));
-}
-
-.slot__warn {
-  position: absolute;
-  top: 5%;
-  right: 5%;
-  width: 0;
-  height: 0;
-  border-top: 7px solid var(--danger-bright);
-  border-left: 7px solid transparent;
-  pointer-events: none;
-}
-
-.pool[data-active='true'] .slot[data-hot='true']:hover,
-.pool[data-active='true'] .slot[data-hot='true']:focus-visible {
-  background: linear-gradient(180deg, var(--danger-lift), var(--danger-lift));
-}
 
 /* A baseline under every piece: short and tall are compared against the same
    line, which is what keeps that attribute readable in a 42px slot. */
