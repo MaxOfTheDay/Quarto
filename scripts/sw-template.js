@@ -32,6 +32,32 @@ const INDEX = new URL('index.html', self.location.href).href
  */
 const precacheUrl = ({ url, revision }) => (revision ? `${url}?v=${revision}` : url)
 
+/*
+ * Only reachable on a first visit that happens to be offline — after that the
+ * whole game is cached and this can never be served. It is still the one
+ * surface a player might see that is not the game, so it is not a bare string.
+ */
+const OFFLINE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quarto</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 2rem; text-align: center;
+    font: 400 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #e9e3d7; color: #1f1a15;
+  }
+  @media (prefers-color-scheme: dark) { body { background: #191512; color: #f2ece0; } }
+  h1 { font-family: 'Iowan Old Style', Georgia, serif; font-weight: 400; font-size: 2.5rem; margin: 0 0 .75rem; }
+  p { margin: 0; max-width: 32ch; opacity: .75; }
+</style></head>
+<body><div>
+  <h1>Quarto</h1>
+  <p>Not connected, and this device has not saved the game yet. Open it once with a connection and it will play offline from then on.</p>
+</div></body></html>`
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map(precacheUrl))),
@@ -71,9 +97,9 @@ self.addEventListener('fetch', (event) => {
         try {
           return await fetch(request)
         } catch {
-          return new Response('Quarto is offline and has not been cached yet.', {
+          return new Response(OFFLINE, {
             status: 503,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
           })
         }
       })(),

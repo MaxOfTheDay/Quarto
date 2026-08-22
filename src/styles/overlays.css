@@ -10,10 +10,10 @@
   align-items: center;
   justify-content: center;
   padding:
-    calc(var(--safe-t) + 32px)
-    calc(var(--safe-r) + 24px)
-    calc(var(--safe-b) + 32px)
-    calc(var(--safe-l) + 24px);
+    calc(var(--safe-t) + var(--s-8))
+    calc(var(--safe-r) + var(--s-6))
+    calc(var(--safe-b) + var(--s-8))
+    calc(var(--safe-l) + var(--s-6));
 }
 
 .setup::before {
@@ -21,9 +21,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(120% 70% at 50% -8%, rgba(255, 253, 246, 0.9), transparent 60%),
-    radial-gradient(90% 60% at 50% 118%, rgba(150, 132, 104, 0.18), transparent 58%);
+  background: var(--ground-glow);
 }
 
 @keyframes setup-in {
@@ -46,7 +44,7 @@
 
 .setup__head {
   text-align: center;
-  margin-bottom: clamp(24px, 4vh, 36px);
+  margin-bottom: clamp(20px, 3.4vh, var(--s-8));
 }
 
 .setup__title {
@@ -58,28 +56,35 @@
 }
 
 .setup__tagline {
-  margin-top: 12px;
+  margin-top: var(--s-3);
   font-size: 14.5px;
   color: var(--ink-3);
 }
 
+/*
+ * The primer teaches the split turn in two lines and the win condition in one
+ * picture. The picture is the same one the rules use, because it is the best
+ * thing either screen has — four different pieces that share one attribute
+ * says more than four decorative ones standing on a rule.
+ */
 .primer {
-  margin-bottom: clamp(24px, 4vh, 34px);
-  padding-top: 22px;
+  margin-bottom: clamp(20px, 3.4vh, var(--s-8));
+  padding-top: var(--s-5);
   border-block: 1px solid var(--hairline);
+  padding-bottom: var(--s-5);
 }
 
 .primer__list {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: var(--s-3);
   list-style: none;
   padding: 0;
 }
 
 .primer__list li {
   display: flex;
-  gap: 13px;
+  gap: var(--s-3);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--ink-2);
@@ -94,58 +99,120 @@
   place-items: center;
   border: 1px solid var(--hairline-strong);
   border-radius: 50%;
-  font-size: 10.5px;
+  font-size: var(--t-xs);
   font-weight: 500;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
-/* The pieces stand on the section's own rule rather than floating above it. */
-.primer__pieces {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 22px;
+.primer .demo {
+  margin-top: var(--s-4);
 }
 
-.primer__pieces .piece {
-  width: 56px;
-  height: 62px;
-  filter: drop-shadow(0 3px 4px rgba(60, 44, 26, 0.2));
+/* ── A game left behind ──────────────────────────────────────────────────── */
+
+/*
+ * The answer to "what now?" for anyone coming back, so it goes above the
+ * choices rather than below them — and the choices fold away behind a link,
+ * because someone resuming a game has already made them.
+ */
+.resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-5);
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.resume__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.resume__detail {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.setup__more {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--s-2);
 }
 
 .setup__fields {
   display: flex;
   flex-direction: column;
-  gap: 17px;
+  gap: var(--s-4);
 }
 
 .field {
   display: grid;
   grid-template-columns: 152px minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
+  align-items: start;
+  gap: var(--s-4);
+}
+
+.field--stack {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
 }
 
 .field__label {
   color: var(--ink-3);
+  padding-top: 11px;
+}
+
+.field--stack .field__label {
+  padding-top: 0;
+}
+
+.field__control {
+  min-width: 0;
+}
+
+/* What the choice actually does, in one line under it. */
+.field__hint {
+  margin-top: 6px;
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+  color: var(--ink-3);
 }
 
 .setup__foot {
-  margin-top: clamp(26px, 4vh, 36px);
-  padding-top: 24px;
+  margin-top: clamp(20px, 3.4vh, var(--s-8));
+  padding-top: var(--s-5);
   border-top: 1px solid var(--hairline);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--s-4);
   flex-wrap: wrap;
+}
+
+.setup__foot[data-quiet='true'] {
+  justify-content: center;
 }
 
 .setup__links {
   display: flex;
   gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* The app's best property, said once, quietly. */
+.setup__offline {
+  margin-top: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--ink-3);
+  text-align: center;
+  opacity: 0.85;
 }
 
 @media (max-width: 520px) {
@@ -153,27 +220,63 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 7px;
   }
-  .primer__pieces .piece {
-    width: 46px;
-    height: 52px;
+  .field__label {
+    padding-top: 0;
   }
   .setup__foot {
     flex-direction: column-reverse;
     align-items: stretch;
   }
-  .setup__foot .btn--primary {
+  .setup__foot .btn--lg {
     width: 100%;
   }
   .setup__links {
     justify-content: center;
   }
+  .resume {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .resume .btn {
+    width: 100%;
+  }
 }
 
-/* Short upright phones: the same screen on a tighter rhythm, so the one thing
-   that matters — Begin — stays above the fold instead of below it. */
+/*
+ * Anything under a full desktop's height gets a tighter rhythm, whatever its
+ * width: the first-run screen carries a primer and a picture, and the one thing
+ * that matters — Begin, or Resume — has to stay above the fold rather than
+ * below it.
+ */
+@media (max-height: 900px) {
+  .setup {
+    padding-block: calc(var(--safe-t) + var(--s-6)) calc(var(--safe-b) + var(--s-6));
+  }
+  .setup__head {
+    margin-bottom: var(--s-5);
+  }
+  .setup__title {
+    font-size: clamp(36px, 7vw, 46px);
+  }
+  .primer {
+    padding-top: var(--s-4);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
+  }
+  .primer .demo {
+    margin-top: var(--s-3);
+    padding: 10px 10px 8px;
+  }
+  .setup__foot {
+    margin-top: var(--s-5);
+    padding-top: var(--s-4);
+  }
+}
+
+/* Short upright phones: tighter again, so the button stays reachable. */
 @media (max-height: 780px) and (max-width: 619px) {
   .setup {
-    padding-block: calc(var(--safe-t) + 20px) calc(var(--safe-b) + 20px);
+    padding-block: calc(var(--safe-t) + var(--s-5)) calc(var(--safe-b) + var(--s-5));
   }
   .setup__title {
     font-size: clamp(32px, 8.5vw, 42px);
@@ -183,11 +286,12 @@
     font-size: 13.5px;
   }
   .setup__head {
-    margin-bottom: 18px;
+    margin-bottom: var(--s-4);
   }
   .primer {
-    padding-top: 16px;
-    margin-bottom: 18px;
+    padding-top: var(--s-4);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
   }
   .primer__list {
     gap: 9px;
@@ -195,69 +299,79 @@
   .primer__list li {
     font-size: 13.5px;
   }
-  .primer__pieces {
-    margin-top: 14px;
-  }
-  .primer__pieces .piece {
-    width: 38px;
-    height: 43px;
+  .primer .demo {
+    margin-top: var(--s-3);
   }
   .setup__fields {
-    gap: 13px;
+    gap: var(--s-3);
   }
   .setup__foot {
-    margin-top: 18px;
-    padding-top: 16px;
-    gap: 12px;
+    margin-top: var(--s-4);
+    padding-top: var(--s-4);
+    gap: var(--s-3);
+  }
+  .resume {
+    margin-bottom: var(--s-4);
+    padding: var(--s-3) 0;
+  }
+  .setup__offline {
+    margin-top: var(--s-3);
   }
 }
 
 /* Smaller again on the shortest phones, where the primer is the difference
-   between reaching Begin and hunting for it. */
-@media (max-height: 620px) and (max-width: 619px) {
+   between reaching the button and hunting for it. */
+@media (max-height: 660px) and (max-width: 619px) {
   .setup {
-    padding-block: calc(var(--safe-t) + 16px) calc(var(--safe-b) + 16px);
+    padding-block: calc(var(--safe-t) + var(--s-4)) calc(var(--safe-b) + var(--s-4));
   }
   .setup__head {
-    margin-bottom: 12px;
+    margin-bottom: var(--s-3);
   }
   .setup__tagline {
     margin-top: 7px;
+    font-size: 13px;
   }
   .primer {
-    padding-top: 12px;
-    margin-bottom: 12px;
+    padding-top: var(--s-3);
+    padding-bottom: var(--s-3);
+    margin-bottom: var(--s-3);
   }
   .primer__list {
-    gap: 8px;
+    gap: var(--s-2);
   }
   .primer__list li {
     font-size: 13px;
     line-height: 1.45;
   }
-  .primer__pieces {
-    margin-top: 11px;
+  .primer .demo {
+    margin-top: 10px;
+    padding: 10px 10px 8px;
   }
-  .primer__pieces .piece {
-    width: 32px;
-    height: 36px;
+  .primer .demo__note {
+    font-size: 11px;
   }
   .setup__fields {
     gap: 11px;
   }
   .setup__foot {
-    margin-top: 14px;
-    padding-top: 13px;
+    margin-top: var(--s-3);
+    padding-top: var(--s-3);
+  }
+  .setup__offline {
+    margin-top: 10px;
+    font-size: 11px;
   }
 }
 
 /*
  * Sideways: two columns rather than one long scroll. What the game is goes on
- * the left, what you have to decide goes on the right, and Begin stays in view.
+ * the left, what you have to decide goes on the right, and the button stays in
+ * view.
  */
 @media (max-height: 560px) and (min-width: 620px) {
   .setup {
-    padding-block: calc(var(--safe-t) + 16px) calc(var(--safe-b) + 16px);
+    padding-block: calc(var(--safe-t) + var(--s-4)) calc(var(--safe-b) + var(--s-4));
   }
 
   .setup__inner {
@@ -267,15 +381,17 @@
     column-gap: clamp(30px, 5vw, 60px);
     align-items: start;
     grid-template-areas:
+      'head   resume'
       'head   fields'
       'primer fields'
-      'primer foot';
+      'primer foot'
+      'primer offline';
   }
 
   .setup__head {
     grid-area: head;
     text-align: left;
-    margin-bottom: 16px;
+    margin-bottom: var(--s-4);
   }
 
   .setup__title {
@@ -285,23 +401,25 @@
   .primer {
     grid-area: primer;
     margin-bottom: 0;
-    padding-top: 14px;
+    padding-top: var(--s-3);
+    padding-bottom: 0;
     border-bottom: none;
   }
 
-  .primer__pieces {
-    justify-content: flex-start;
-    margin-top: 16px;
+  .resume {
+    grid-area: resume;
+    margin-bottom: var(--s-4);
+    padding: var(--s-3) 0;
   }
 
-  .primer__pieces .piece {
-    width: 44px;
-    height: 49px;
+  .setup__more {
+    grid-area: fields;
+    justify-content: flex-start;
   }
 
   .setup__fields {
     grid-area: fields;
-    gap: 14px;
+    gap: var(--s-3);
   }
 
   .field {
@@ -309,10 +427,20 @@
     gap: 6px;
   }
 
+  .field__label {
+    padding-top: 0;
+  }
+
   .setup__foot {
     grid-area: foot;
-    margin-top: 18px;
-    padding-top: 14px;
+    margin-top: var(--s-4);
+    padding-top: var(--s-3);
+  }
+
+  .setup__offline {
+    grid-area: offline;
+    text-align: left;
+    margin-top: var(--s-3);
   }
 }
 
@@ -335,11 +463,11 @@
   align-items: center;
   justify-content: center;
   padding:
-    calc(var(--safe-t) + 20px)
+    calc(var(--safe-t) + var(--s-5))
     calc(var(--safe-r) + 18px)
-    calc(var(--safe-b) + 20px)
+    calc(var(--safe-b) + var(--s-5))
     calc(var(--safe-l) + 18px);
-  background: rgba(38, 30, 20, 0.42);
+  background: var(--scrim-face);
   animation: scrim-in var(--dur) var(--ease-out) both;
   overflow-y: auto;
 }
@@ -355,20 +483,25 @@
   }
 }
 
+/*
+ * One anatomy for every dialog: a head that stays put, a body that scrolls, and
+ * an action row beneath. Only the width changes between them.
+ */
 .sheet {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 440px;
   max-height: 100%;
-  overflow-y: auto;
-  padding: 26px;
   border-radius: var(--r-md);
   background: var(--paper);
   box-shadow: var(--shadow-lg);
   animation: sheet-in var(--dur-slow) var(--ease-settle) both;
 }
 
-.sheet--rules {
+.sheet--rules,
+.sheet--settings {
   max-width: 520px;
 }
 
@@ -380,10 +513,16 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 16px;
-  margin-bottom: 22px;
+  gap: var(--s-4);
+  flex-shrink: 0;
+  padding: var(--s-6) var(--s-6) var(--s-4);
   border-bottom: 1px solid var(--hairline);
+  /* Close stays reachable however far the body has scrolled. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
+  border-radius: var(--r-md) var(--r-md) 0 0;
 }
 
 .sheet__title {
@@ -397,8 +536,25 @@
   flex-shrink: 0;
 }
 
+.sheet__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-5) var(--s-6);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sheet--confirm .sheet__head {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sheet--confirm .sheet__body {
+  padding-top: 10px;
+}
+
 .sheet__text {
-  margin-top: 10px;
   font-size: 14.5px;
   color: var(--ink-2);
 }
@@ -408,13 +564,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 24px;
-}
-
-.sheet__body {
-  display: flex;
-  flex-direction: column;
-  gap: 21px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: var(--s-4) var(--s-6) var(--s-6);
 }
 
 .rule {
@@ -424,52 +576,69 @@
 }
 
 .rule__lead {
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--t-base);
+  line-height: var(--lh-prose);
   color: var(--ink-2);
 }
 
 .rule__aside {
-  font-size: 13px;
+  font-size: var(--t-md);
   color: var(--ink-3);
 }
 
-.rule__demo {
+/* ── The game in one picture ─────────────────────────────────────────────── */
+
+/*
+ * Four different pieces sharing one attribute, standing in real sockets on the
+ * real slab. Used by both the rules and the start screen, so the app has one
+ * version of its own board rather than two that drift.
+ */
+.demo {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: var(--s-1);
   margin-top: 6px;
   padding: 14px 14px 10px;
   border-radius: var(--r-md);
-  background: linear-gradient(168deg, var(--wood-hi), var(--wood) 44%, var(--wood-lo));
-  box-shadow: inset 0 1px 0 rgba(255, 234, 200, 0.16);
+  background:
+    radial-gradient(140% 100% at 28% -6%, rgba(255, 228, 188, 0.1), transparent 58%),
+    linear-gradient(180deg, var(--slab-hi), var(--slab-mid) 52%, var(--slab-lo));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 234, 200, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    var(--shadow-md);
 }
 
-.rule__demo-cell {
+.demo__cell {
   aspect-ratio: 1;
   border-radius: 7%;
-  background: linear-gradient(178deg, var(--socket-lo), var(--socket) 58%, #402f1f);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55);
+  background: linear-gradient(180deg, var(--socket-lo), var(--socket) 42%, #2c2317);
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.72),
+    inset 0 -1px 0 rgba(255, 220, 172, 0.06);
   padding: 6%;
 }
 
-.rule__demo-cell .piece {
+.demo__cell .piece {
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
 }
 
-.rule__demo-note {
+.demo__note {
   grid-column: 1 / -1;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--s-1);
+  font-size: var(--t-sm);
   color: rgba(255, 240, 218, 0.72);
   text-align: center;
 }
 
+/* ── The four attributes ─────────────────────────────────────────────────── */
+
 .axes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px 20px;
+  gap: var(--s-4) var(--s-5);
   list-style: none;
   padding: 0;
   margin-top: 6px;
@@ -496,20 +665,24 @@
   filter: drop-shadow(0 2px 2px rgba(60, 44, 26, 0.18));
 }
 
-.axis__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.axis__name {
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
+/* The values, which the whole game uses. The axis they sit on has no name
+   anywhere else in the app, so it does not get one here. */
 .axis__note {
-  font-size: 12.5px;
-  color: var(--ink-3);
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+/* ── Keyboard ────────────────────────────────────────────────────────────── */
+
+/* A shortcut table is a third of this sheet on a phone, and inapplicable there. */
+.keys-section {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .keys-section {
+    display: flex;
+  }
 }
 
 .keys {
@@ -524,7 +697,7 @@
   grid-template-columns: 118px minmax(0, 1fr);
   gap: 14px;
   align-items: baseline;
-  font-size: 13px;
+  font-size: var(--t-md);
 }
 
 .keys__row dd {
@@ -538,7 +711,7 @@ kbd {
   border: 1px solid var(--hairline-strong);
   border-bottom-width: 2px;
   border-radius: var(--r-sm);
-  background: rgba(255, 253, 247, 0.75);
+  background: var(--paper-raised);
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 500;
@@ -549,8 +722,14 @@ kbd {
   .axes {
     grid-template-columns: minmax(0, 1fr);
   }
-  .sheet {
-    padding: 22px 20px;
+  .sheet__head {
+    padding: var(--s-5) var(--s-5) var(--s-3);
+  }
+  .sheet__body {
+    padding: var(--s-4) var(--s-5);
+  }
+  .sheet__actions {
+    padding: var(--s-3) var(--s-5) var(--s-5);
   }
 }
 
@@ -559,7 +738,7 @@ kbd {
 .toggles {
   display: flex;
   flex-direction: column;
-  margin-top: 4px;
+  margin-top: var(--s-1);
   border-top: 1px solid var(--hairline);
 }
 
@@ -568,7 +747,7 @@ kbd {
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 12px 2px;
+  padding: var(--s-3) 2px;
   text-align: left;
   border-bottom: 1px solid var(--hairline);
 }
@@ -586,12 +765,12 @@ kbd {
 }
 
 .toggle__hint {
-  font-size: 12.5px;
+  font-size: var(--t-sm);
   color: var(--ink-3);
 }
 
 .toggle__state {
-  font-size: 10.5px;
+  font-size: var(--t-xs);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -607,7 +786,7 @@ kbd {
   flex-shrink: 0;
   border-radius: 9px;
   border: 1px solid var(--hairline-strong);
-  background: rgba(255, 253, 247, 0.7);
+  background: var(--paper-raised);
   transition:
     background var(--dur) var(--ease-out),
     border-color var(--dur) var(--ease-out);

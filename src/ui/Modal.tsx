@@ -1,20 +1,41 @@
-import { useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, type ReactNode } from 'react'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 export interface ModalProps {
+  /**
+   * The dialog's title. Rendered as its heading and used as its accessible
+   * name, so there is one string rather than a prop and a duplicate `<h2>`.
+   */
   title: string
   onClose: () => void
   children: ReactNode
   /** Extra class for width and rhythm variations. */
   variant?: string
+  /** Right-aligned buttons pinned under the body. */
+  actions?: ReactNode
+  /** Hidden when the dialog's only exits are its own actions. */
+  closeLabel?: string | null
 }
 
-/** A focus-trapping dialog: Escape closes, Tab cycles, focus returns on close. */
-export function Modal({ title, onClose, children, variant }: ModalProps) {
+/**
+ * A focus-trapping dialog: Escape closes, Tab cycles, focus returns on close.
+ * Every dialog in the game has the same anatomy — a head that stays put while
+ * the body scrolls, and an action row beneath it — so no two of them can drift
+ * into slightly different shapes.
+ */
+export function Modal({
+  title,
+  onClose,
+  children,
+  variant,
+  actions,
+  closeLabel = 'Close',
+}: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const restoreTo = useRef<HTMLElement | null>(null)
+  const titleId = useId()
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -63,10 +84,23 @@ export function Modal({ title, onClose, children, variant }: ModalProps) {
         className={`sheet${variant ? ` sheet--${variant}` : ''}`}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
         tabIndex={-1}
       >
-        {children}
+        <header className="sheet__head">
+          <h2 className="sheet__title" id={titleId}>
+            {title}
+          </h2>
+          {closeLabel && (
+            <button type="button" className="btn btn--quiet sheet__close" onClick={onClose}>
+              {closeLabel}
+            </button>
+          )}
+        </header>
+
+        <div className="sheet__body">{children}</div>
+
+        {actions && <div className="sheet__actions">{actions}</div>}
       </div>
     </div>
   )

@@ -1,10 +1,16 @@
 /**
- * The app icon: a corner of the board itself — four milled pockets in smoked
- * oak, two of them holding pieces that disagree on every axis. A lone piece
- * reads as an object; the pockets say board game.
+ * The app icon: one milled pocket in smoked oak with a single bone piece
+ * standing in it — solid and round, the cleanest silhouette the set has. A
+ * hollow top puts a dark hole in the middle of a bright cylinder, which at
+ * launcher size stops reading as a game piece at all.
  *
- * `maskable` shrinks the grid into the middle 80% circle that survives
- * Android's icon mask, since the pieces sit on the diagonal that a mask crops.
+ * Four pockets and two small pieces read as a brown square once the launcher
+ * has shrunk them to 48px among saturated neighbours. One piece, as large as
+ * the pocket will take, is bone against near-black — the highest contrast the
+ * set has — and keeps its silhouette all the way down.
+ *
+ * `maskable` shrinks the pocket into the middle 80% circle that survives
+ * Android's icon mask.
  */
 
 const S = 512
@@ -58,26 +64,24 @@ function piece({ cx, baseY, k, tall, dark, square, hollow }) {
 export function iconSvg({ size = 512, maskable = false, radius = null } = {}) {
   const corner = radius ?? (maskable ? 0 : 96)
 
-  // A maskable icon only keeps the middle 80% circle, and the pieces sit on the
-  // grid's diagonal, so the whole grid has to fit inside that circle.
-  const grid = maskable ? 284 : 396
-  const gap = grid * 0.045
-  const cell = (grid - gap) / 2
-  const gx = (S - grid) / 2
-  const gy = (S - grid) / 2
+  // A maskable icon only keeps the middle 80% circle, so the pocket has to fit
+  // inside it; an ordinary one can run closer to the edge.
+  const cell = maskable ? 268 : 344
+  const gx = (S - cell) / 2
+  const gy = (S - cell) / 2
 
-  // Pieces are scaled up relative to a real board cell — at icon sizes they
-  // have to carry the whole drawing — but still stand clear inside the pocket.
-  const k = (cell * 1.05) / 108
+  // The piece carries the whole drawing at icon sizes, so it is scaled up well
+  // past a real board cell while still standing clear inside the pocket.
+  const k = (cell * 1.02) / 108
 
-  const at = (col, row) => ({
-    cx: gx + col * (cell + gap) + cell / 2,
-    baseY: gy + row * (cell + gap) + cell * 0.9 - 12.4 * k,
+  const at = () => ({
+    cx: gx + cell / 2,
+    baseY: gy + cell * 0.9 - 12.4 * k,
   })
 
-  const pocket = (col, row) => {
-    const x = gx + col * (cell + gap)
-    const y = gy + row * (cell + gap)
+  const pocket = () => {
+    const x = gx
+    const y = gy
     return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${cell * 0.09}" fill="url(#socket)"/>
     <rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="${cell * 0.09}" fill="url(#socketTop)"/>
     <rect x="${x}" y="${y + cell * 0.014}" width="${cell}" height="${cell}" rx="${cell * 0.09}"
@@ -154,11 +158,7 @@ export function iconSvg({ size = 512, maskable = false, radius = null } = {}) {
 
   <rect width="${S}" height="${S}" rx="${corner}" fill="url(#oak)"/>
   <rect width="${S}" height="${S}" rx="${corner}" fill="url(#lamp)"/>
-  ${pocket(0, 0)}
-  ${pocket(1, 0)}
-  ${pocket(0, 1)}
-  ${pocket(1, 1)}
-${piece({ ...at(0, 0), k, tall: true, dark: false, square: false, hollow: true })}
-${piece({ ...at(1, 1), k, tall: false, dark: true, square: true, hollow: false })}
+  ${pocket()}
+${piece({ ...at(), k, tall: true, dark: false, square: false, hollow: false })}
 </svg>`
 }

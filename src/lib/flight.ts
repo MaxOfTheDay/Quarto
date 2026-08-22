@@ -29,6 +29,10 @@ export function flyClone(
 
   const clone = target.cloneNode(true) as HTMLElement
   clone.setAttribute('aria-hidden', 'true')
+  // The clone keeps the destination's classes so it keeps its look, which also
+  // means it answers to the destination's selectors while it is in the air.
+  // Anything counting real elements can exclude it by this.
+  clone.setAttribute('data-flight', 'true')
   Object.assign(clone.style, {
     position: 'fixed',
     left: `${from.left}px`,

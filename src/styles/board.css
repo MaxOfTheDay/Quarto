@@ -4,6 +4,12 @@
  * The slab takes the room the stage has left over: `--board-size` is already
  * capped by the viewport height, so `min()` against the column width is the
  * only other constraint. It is never scrolled to and never clipped.
+ *
+ * It also has two states. While the piece in hand is yours to place, the board
+ * is the live surface and stands off the page; while you are choosing what to
+ * hand over it settles, because for that half of the turn it is a record of the
+ * game rather than something you can act on. Nothing is greyed out — the same
+ * object is simply picked up or set down.
  */
 .board__slab {
   --slab-pad: 4.2%;
@@ -15,11 +21,38 @@
   border-radius: var(--r-slab);
   background:
     radial-gradient(140% 100% at 28% -6%, rgba(255, 228, 188, 0.1), transparent 58%),
-    linear-gradient(180deg, #403426, #32281e 52%, #261e15);
+    linear-gradient(180deg, var(--slab-hi), var(--slab-mid) 52%, var(--slab-lo));
+  box-shadow:
+    var(--shadow-slab-rest),
+    inset 0 1px 0 rgba(255, 228, 188, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  transition:
+    box-shadow var(--dur-phase) var(--ease-out),
+    filter var(--dur-phase) var(--ease-out);
+  /*
+   * Receded, not disabled: enough to lose the argument with the pool, not
+   * enough to stop the position being read. It is expressed in light alone —
+   * a board that also moved, however slightly, would shift the target a player
+   * is aiming at between the two halves of every turn.
+   */
+  filter: saturate(0.9) brightness(0.96);
+}
+
+.board__slab[data-live='true'] {
   box-shadow:
     var(--shadow-slab),
     inset 0 1px 0 rgba(255, 228, 188, 0.16),
     inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  filter: none;
+}
+
+/* A finished game is nobody's to act on, so the board stands up to be looked at. */
+.stage[data-over='true'] .board__slab {
+  box-shadow:
+    var(--shadow-slab),
+    inset 0 1px 0 rgba(255, 228, 188, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  filter: none;
 }
 
 /* Grain: fractal noise stretched along one axis. Static, so it costs one paint. */
@@ -43,6 +76,26 @@
   border-radius: inherit;
   border: 1px solid rgba(0, 0, 0, 0.5);
   pointer-events: none;
+  transition: border-color var(--dur-phase) var(--ease-out);
+}
+
+/* Tapping the board while the pool is the live surface: the slab answers, and
+   the status line says which way round the turn is. */
+@keyframes slab-refuse {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  22% {
+    transform: translateX(-3px);
+  }
+  62% {
+    transform: translateX(2px);
+  }
+}
+
+.stage[data-refuse='true'] .board__slab:not([data-live='true']) {
+  animation: slab-refuse 320ms var(--ease-out) both;
 }
 
 .board__grid {
@@ -78,18 +131,15 @@
   inset: 0;
   display: block;
   border-radius: 7%;
+  cursor: default;
 }
 
 .cell[data-target] {
   cursor: pointer;
 }
 
-.cell:disabled {
-  cursor: default;
-}
-
 .cell:focus-visible {
-  outline: 2px solid var(--accent-warm);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -105,7 +155,20 @@
   transition: box-shadow var(--dur) var(--ease-out);
 }
 
-/* The one accent on the page: an empty pocket that will take your piece. */
+/* The one accent on the page: an empty pocket that will take your piece. They
+   arrive across the board rather than all together, which is what makes the
+   change of phase something you see rather than something you are told. */
+@keyframes target-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  to {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 .cell__target {
   position: absolute;
   left: 50%;
@@ -118,18 +181,26 @@
   transform: translate(-50%, -50%) scale(0.3);
   transition:
     opacity var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-settle);
+    transform var(--dur) var(--ease-settle),
+    background var(--dur) var(--ease-out);
 }
 
 .cell[data-target] .cell__target {
   opacity: 0.6;
   transform: translate(-50%, -50%) scale(1);
+  animation: target-in var(--dur) var(--ease-settle) both;
+  animation-delay: calc(var(--target-index) * 22ms);
 }
 
 .cell[data-target]:hover .cell__target,
 .cell[data-target]:focus-visible .cell__target {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.9);
+}
+
+/* The ghost says everything the dot was saying, and says it better. */
+.cell[data-ghost='true'] .cell__target {
+  opacity: 0;
 }
 
 .cell[data-target]:hover .cell__socket,
@@ -144,6 +215,37 @@
   box-shadow:
     inset 0 0 0 2px rgba(217, 102, 58, 0.6),
     inset 0 3px 7px rgba(0, 0, 0, 0.65);
+}
+
+/* ── Where the piece in hand wins ────────────────────────────────────────── */
+
+/*
+ * Coaching, and only ever when it is on. A win you can take should not be
+ * possible to miss, so the pocket is filled rather than dotted — a different
+ * mark, not a brighter one, so it cannot be mistaken for an ordinary target.
+ */
+@keyframes wins-here {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.cell[data-wins='true'] .cell__target {
+  width: 26%;
+  opacity: 0.9;
+  background: radial-gradient(circle, var(--accent-warm) 38%, rgba(217, 102, 58, 0) 72%);
+  animation: wins-here 1.6s var(--ease-out) infinite;
+}
+
+.cell[data-wins='true'] .cell__socket {
+  box-shadow:
+    inset 0 0 0 1.5px rgba(217, 102, 58, 0.55),
+    inset 0 3px 6px rgba(0, 0, 0, 0.62),
+    0 1px 0 rgba(255, 228, 188, 0.1);
 }
 
 /* ── Pieces on the board ─────────────────────────────────────────────────── */
@@ -179,6 +281,45 @@
 
 .cell__piece[data-drop='true'] {
   animation: piece-drop 350ms var(--ease-settle) both;
+}
+
+/* ── The move just played ────────────────────────────────────────────────── */
+
+/*
+ * A corner tick on the socket the last piece landed in. In the warm highlight
+ * rather than the accent, so it never competes with a target for the meaning
+ * "act here" — it says "this happened", which is what you want to know when a
+ * board comes back to you.
+ */
+.cell[data-last='true'] .cell__socket::after {
+  content: '';
+  position: absolute;
+  top: 7%;
+  right: 7%;
+  width: 12%;
+  aspect-ratio: 1;
+  border-top: 1.5px solid rgba(255, 220, 172, 0.55);
+  border-right: 1.5px solid rgba(255, 220, 172, 0.55);
+  border-top-right-radius: 2px;
+}
+
+/* ── The piece you are about to place ────────────────────────────────────── */
+
+.cell__ghost {
+  position: absolute;
+  inset: 5%;
+  pointer-events: none;
+  opacity: 0.26;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.cell__ghost[data-hover='true'] {
+  opacity: 0.4;
+}
+
+.cell__ghost .piece {
+  width: 100%;
+  height: 100%;
 }
 
 /* ── Winning line ────────────────────────────────────────────────────────── */
@@ -221,6 +362,8 @@
 .board__winline {
   position: absolute;
   inset: 0;
+  /* Above the sockets, below the pieces: the stroke is painted on the board
+     the four pieces stand on, not struck through them. */
   z-index: 1;
   width: auto;
   height: auto;
@@ -237,6 +380,11 @@
   }
 }
 
+/*
+ * Heavy enough to be the thing that says "these four". At its old weight it
+ * was invisible next to the socket rings, which meant three signals doing the
+ * work of one.
+ */
 .board__winline-under,
 .board__winline-main {
   fill: none;
@@ -246,11 +394,34 @@
 }
 
 .board__winline-under {
-  stroke: rgba(0, 0, 0, 0.45);
-  stroke-width: 1.9;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 3;
 }
 
 .board__winline-main {
   stroke: var(--accent-warm);
-  stroke-width: 0.62;
+  stroke-width: 1.5;
+}
+
+/* ── The draw ────────────────────────────────────────────────────────────── */
+
+/*
+ * Sixteen pieces and no line: the board settles once, all together, which is
+ * the opposite gesture to the win's staggered lift and gives the draw an
+ * ending of its own instead of simply stopping.
+ */
+@keyframes board-settle {
+  0% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(0.9%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.stage[data-draw='true'] .cell__piece {
+  animation: board-settle 520ms 120ms var(--ease-settle) both;
 }

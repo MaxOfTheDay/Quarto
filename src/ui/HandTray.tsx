@@ -3,14 +3,21 @@ import { describePiece, type PieceId } from '../game'
 import { PieceGlyph } from './PieceGlyph'
 
 export interface HandTrayProps {
+  /** The piece in play, or null while its owner is choosing the next one. */
   piece: PieceId | null
+  /** The pool piece under the pointer or keyboard cursor, while choosing. */
+  preview: PieceId | null
   /** Whose piece it is, or who the next one is for. */
   label: string
+  /** Shown on the shelf while choosing and nothing is under the pointer. */
+  prompt: string
   /** Read out to assistive tech in place of the visual shelf. */
   description: string
   hidden: boolean
   /** True when the local player is the one who must place this piece. */
   armed: boolean
+  /** True when the previewed piece would let the opponent win at once. */
+  warn: boolean
 }
 
 /**
@@ -19,47 +26,59 @@ export interface HandTrayProps {
  * game where naming them matters, and the reason tone never has to carry
  * meaning on its own.
  *
- * The shelf keeps its size in both phases. While its owner is choosing it holds
- * the empty socket the next piece lands in, which is both honest — that is
- * exactly where the chosen piece flies to — and what stops the board and the
- * pool shifting on every half-move.
+ * The shelf keeps its size in both phases, which is what stops the board and
+ * the pool shifting on every half-move. While its owner is choosing, that
+ * reserved space shows the piece they are considering rather than an empty
+ * socket: it is the same shelf the chosen piece flies to, so the preview is
+ * literally a picture of what is about to happen.
  */
 export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function HandTray(
-  { piece, label, description, hidden, armed },
+  { piece, preview, label, prompt, description, hidden, armed, warn },
   ref,
 ) {
-  const attributes = piece === null ? [] : describePiece(piece).split(' ')
+  const shown = piece ?? preview
+  const attributes = shown === null ? [] : describePiece(shown).split(' ')
+  const previewing = piece === null && preview !== null
 
   return (
     <section
       className="tray"
       data-armed={armed ? 'true' : undefined}
       data-empty={piece === null ? 'true' : undefined}
+      data-preview={previewing ? 'true' : undefined}
+      data-warn={previewing && warn ? 'true' : undefined}
       aria-label={description}
     >
-      <p className="eyebrow tray__label" data-accent={armed ? 'true' : undefined}>
+      <p className="state-label tray__label" data-accent={armed ? 'true' : undefined}>
         {label}
       </p>
 
       <div className="tray__shelf">
-        {piece !== null ? (
+        {shown !== null ? (
           <span
             ref={ref}
             className="tray__piece"
+            data-ghost={previewing ? 'true' : undefined}
             data-hidden={hidden ? 'true' : undefined}
-            key={piece}
+            /* A preview is one element changing its contents, not a new piece
+               arriving — so it must not replay the arrival keyframes. */
+            key={previewing ? 'preview' : `hand-${shown}`}
           >
-            <PieceGlyph piece={piece} className="piece" />
+            <PieceGlyph piece={shown} className="piece" />
           </span>
         ) : (
-          <span className="tray__socket" aria-hidden="true" />
+          <span ref={ref} className="tray__prompt">
+            {prompt}
+          </span>
         )}
       </div>
 
       <p className="tray__attrs" aria-hidden="true">
-        {attributes.map((attribute) => (
-          <span key={attribute}>{attribute}</span>
-        ))}
+        {previewing && warn ? (
+          <span className="tray__attrs-warn">Wins for your opponent</span>
+        ) : (
+          attributes.map((attribute) => <span key={attribute}>{attribute}</span>)
+        )}
       </p>
     </section>
   )

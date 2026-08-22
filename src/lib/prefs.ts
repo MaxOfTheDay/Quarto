@@ -5,6 +5,8 @@ import type { PlayerId } from '../game'
 export type Mode = 'local' | 'computer'
 /** Who hands over the opening piece; 'random' is resolved when a game starts. */
 export type Opener = 'p1' | 'p2' | 'random'
+/** 'system' follows the device; the other two are an explicit override. */
+export type Theme = 'system' | 'light' | 'dark'
 
 export interface Prefs {
   mode: Mode
@@ -13,6 +15,17 @@ export interface Prefs {
   sound: boolean
   reducedEffects: boolean
   seenIntro: boolean
+  theme: Theme
+  /**
+   * Shows what the engine already knows: where the piece in hand wins, and
+   * which pieces hand the game over. On for the first few games and then out
+   * of the way — see `coachingActive`.
+   */
+  coach: boolean
+  /** Whether the player has ever changed `coach` themselves. */
+  coachSet: boolean
+  /** Finished games, used to retire the coaching default and pace the first game. */
+  gamesPlayed: number
 }
 
 const DEFAULTS: Prefs = {
@@ -22,9 +35,16 @@ const DEFAULTS: Prefs = {
   sound: true,
   reducedEffects: false,
   seenIntro: false,
+  theme: 'system',
+  coach: true,
+  coachSet: false,
+  gamesPlayed: 0,
 }
 
-const KEY = 'quarto.prefs.v1'
+const KEY = 'quarto.prefs.v2'
+
+/** Games after which coaching stops being offered by default. */
+export const COACH_GRACE_GAMES = 3
 
 function read(): Prefs {
   try {
@@ -50,6 +70,17 @@ export function usePrefs() {
 
   const update = useCallback((patch: Partial<Prefs>) => setPrefs((p) => ({ ...p, ...patch })), [])
   return [prefs, update] as const
+}
+
+/**
+ * Coaching is on until the player has played enough games to have learned what
+ * it teaches — unless they have said otherwise, in which case they meant it. It
+ * is never on against Hard: at that point the marks would be playing the game.
+ */
+export function coachingActive(prefs: Prefs, difficulty: Difficulty, vsComputer: boolean): boolean {
+  if (vsComputer && difficulty === 'hard') return false
+  if (prefs.coachSet) return prefs.coach
+  return prefs.gamesPlayed < COACH_GRACE_GAMES
 }
 
 /** Turns the stored preference into the concrete player who opens. */

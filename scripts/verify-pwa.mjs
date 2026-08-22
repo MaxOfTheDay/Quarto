@@ -153,7 +153,7 @@ await page.waitForSelector('.setup__title', { timeout: 15000 })
 check(true, 'app starts with no network at all')
 
 await page.getByRole('radio', { name: 'Two players', exact: true }).click()
-await page.getByRole('button', { name: 'Begin' }).click()
+await page.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
 await page.waitForSelector('.board__slab', { timeout: 10000 })
 await page.locator('[data-piece="3"]').click()
 await page.waitForTimeout(500)
@@ -162,12 +162,18 @@ await page.waitForTimeout(500)
 check((await page.locator('[data-cell="5"] .cell__piece').count()) === 1, 'the game is playable offline')
 
 // The AI runs in a separate worker chunk, which has to be cached as well.
-await page.getByRole('button', { name: 'New game', exact: true }).first().click()
+// On a phone the game's secondary controls live behind the overflow menu.
+await page.locator('.menu__trigger').click()
+await page.getByRole('menuitem', { name: 'New game', exact: true }).click()
 await page.waitForTimeout(300)
-await page.getByRole('button', { name: 'New game', exact: true }).last().click()
+await page.getByRole('button', { name: 'Discard and start over' }).click()
 await page.waitForSelector('.setup__title', { timeout: 10000 })
+// A game was in progress, so the start screen leads with Resume; the fields
+// are one step behind it.
+await page.getByRole('button', { name: 'Start something else' }).click()
 await page.getByRole('radio', { name: 'Vs computer', exact: true }).click()
-await page.getByRole('button', { name: 'Begin' }).click()
+// "Begin" on a clean start, "Start new game" when a game was left behind.
+await page.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
 await page.waitForSelector('.board__slab', { timeout: 10000 })
 await page.locator('[data-piece="3"]').click()
 await page.waitForTimeout(3000)

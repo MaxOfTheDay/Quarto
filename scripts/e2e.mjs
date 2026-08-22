@@ -39,16 +39,31 @@ async function open(width = 1280, height = 900) {
 
 async function begin(p, mode = 'Two players') {
   await p.getByRole('radio', { name: mode, exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(400)
+}
+
+/** Undo names what it will undo, so match either half of the turn. */
+const undoButton = (p) => p.getByRole('button', { name: /^(Undo placement|Undo choice|Take back)$/ })
+
+/** The secondary controls are spelled out on a wide screen and behind one
+ *  control on a phone. */
+async function openMenu(p, name) {
+  const wide = p.locator('.topbar__wide').getByRole('button', { name, exact: true })
+  if (await wide.isVisible().catch(() => false)) {
+    await wide.click()
+    return
+  }
+  await p.locator('.menu__trigger').click()
+  await p.getByRole('menuitem', { name, exact: true }).click()
 }
 
 // ── Undo ────────────────────────────────────────────────────────────────────
 {
   const { p, ctx, errors } = await open()
   await begin(p)
-  check('undo disabled at game start', await p.getByRole('button', { name: 'Undo' }).isDisabled())
+  check('undo disabled at game start', await undoButton(p).isDisabled())
 
   await p.locator('[data-piece="3"]').click()
   await p.waitForTimeout(400)
@@ -57,13 +72,13 @@ async function begin(p, mode = 'Two players') {
   check('piece landed on the board', (await p.locator('[data-cell="5"] .cell__piece').count()) === 1)
   check('pool lost the played piece', (await p.locator('[data-piece="3"] .slot__piece').count()) === 0)
 
-  await p.getByRole('button', { name: 'Undo' }).click()
+  await undoButton(p).click()
   await p.waitForTimeout(300)
   check('undo removes the placement', (await p.locator('[data-cell="5"] .cell__piece').count()) === 0)
-  await p.getByRole('button', { name: 'Undo' }).click()
+  await undoButton(p).click()
   await p.waitForTimeout(300)
   check('undo returns the piece to the pool', (await p.locator('[data-piece="3"] .slot__piece').count()) === 1)
-  check('undo back to start disables itself', await p.getByRole('button', { name: 'Undo' }).isDisabled())
+  check('undo back to start disables itself', await undoButton(p).isDisabled())
   check('no console errors during undo', errors.length === 0, errors.join('; '))
   await ctx.close()
 }
@@ -75,7 +90,8 @@ async function begin(p, mode = 'Two players') {
   await p.locator('[data-piece="0"]').focus()
   await p.keyboard.press('Enter')
   await p.waitForTimeout(450)
-  check('keyboard selects a piece', (await p.locator('.tray__piece').count()) === 1)
+  // Scoped to the shelf: a clone of the piece is in the air on its way there.
+  check('keyboard selects a piece', (await p.locator('.tray .tray__piece').count()) === 1)
 
   await p.locator('[data-cell="0"]').focus()
   await p.keyboard.press('ArrowRight')
@@ -108,7 +124,7 @@ async function begin(p, mode = 'Two players') {
   check('mid-game restart asks first', (await p.getByRole('dialog').count()) === 1)
   await p.getByRole('button', { name: 'Keep playing' }).click()
   await p.waitForTimeout(300)
-  check('keeping the game keeps the position', (await p.locator('.tray__piece').count()) === 1)
+  check('keeping the game keeps the position', (await p.locator('.tray .tray__piece').count()) === 1)
   await ctx.close()
 }
 
@@ -157,7 +173,7 @@ async function begin(p, mode = 'Two players') {
   check('playing a move opens an audio context', (await p.evaluate(() => window.__ctxCount)) >= 1)
   check('no audio errors', errors.length === 0, errors.join('; '))
 
-  await p.getByRole('button', { name: 'Rules' }).click()
+  await openMenu(p, 'Settings')
   await p.waitForTimeout(300)
   await p.getByRole('switch', { name: /Reduced motion/ }).click()
   await p.waitForTimeout(200)
@@ -174,7 +190,7 @@ async function begin(p, mode = 'Two players') {
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
   await p.getByRole('radio', { name: 'Hard', exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.getByRole('button', { name: 'Sound on', exact: true }).click()
   await p.waitForTimeout(200)
@@ -191,7 +207,7 @@ async function begin(p, mode = 'Two players') {
   const { p, ctx, errors } = await open()
   await p.getByRole('radio', { name: 'Vs computer', exact: true }).click()
   await p.getByRole('radio', { name: 'Hard', exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
 
   // The search runs in a worker, so animation frames should keep arriving even
@@ -253,7 +269,7 @@ for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
   await p.getByRole('radio', { name: 'Two players', exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(400)
 
@@ -293,7 +309,7 @@ for (const [width, height] of [[390, 844], [1280, 900], [844, 390]]) {
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
   await p.getByRole('radio', { name: 'Two players', exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(400)
 
@@ -326,13 +342,32 @@ for (const [width, height] of [[390, 844], [1280, 900], [844, 390]]) {
 // Whose turn it is, and whether to place or to choose, is the one thing a
 // player has to be able to see at all times. It used to scroll away on short
 // screens and on any phone held sideways.
-for (const [width, height] of [[360, 640], [320, 568], [844, 390], [740, 360], [932, 430]]) {
+/*
+ * The heights matter as much as the widths. 561-700px at a desktop width is
+ * the gap between the sideways-phone breakpoint and the height at which the
+ * rail genuinely fits, and it used to run the pool off the bottom of the
+ * screen with no scrollbar to find it.
+ */
+for (const [width, height] of [
+  [360, 640],
+  [320, 568],
+  [844, 390],
+  [740, 360],
+  [667, 375],
+  [932, 430],
+  [1280, 580],
+  [1280, 600],
+  [1280, 640],
+  [1366, 648],
+  [1024, 600],
+  [834, 1112],
+]) {
   const ctx = await browser.newContext({ viewport: { width, height } })
   const p = await ctx.newPage()
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
   await p.getByRole('radio', { name: 'Two players', exact: true }).click()
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(400)
 
@@ -358,6 +393,25 @@ for (const [width, height] of [[360, 640], [320, 568], [844, 390], [740, 360], [
   check(`${width}x${height}: the page never scrolls`, after.pageScroll <= 0, `${after.pageScroll}px over`)
   check(`${width}x${height}: the stage never scrolls`, after.stageScroll <= 0, `${after.stageScroll}px over`)
   check(`${width}x${height}: the pool is fully on screen`, after.poolBottom <= height + 1)
+
+  // A slot shorter than the piece standing in it is sliced by the tray's own
+  // edge, which is how sixteen pieces once lost their tops in landscape.
+  const sliced = await p.evaluate(() =>
+    [...document.querySelectorAll('.slot')].filter((slot) => {
+      const glyph = slot.querySelector('.slot__piece')
+      if (!glyph) return false
+      const g = glyph.getBoundingClientRect()
+      const s = slot.getBoundingClientRect()
+      return g.top < s.top - 0.6 || g.bottom > s.bottom + 0.6
+    }).length,
+  )
+  check(`${width}x${height}: no piece is clipped by its slot`, sliced === 0, `${sliced} sliced`)
+
+  const square = await p.evaluate(() => {
+    const b = document.querySelector('.board__slab').getBoundingClientRect()
+    return Math.abs(b.width - b.height)
+  })
+  check(`${width}x${height}: the board stays square`, square <= 1.5, `${square.toFixed(1)}px out`)
   await ctx.close()
 }
 
@@ -387,7 +441,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   const p = await ctx.newPage()
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(300)
   const edges = await p.evaluate(() => {
@@ -419,8 +473,102 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
     filter: getComputedStyle(document.querySelector('.slot__piece')).filter,
   }))
   check('the pool stays legible between turns', waiting.opacity >= 0.8, `opacity ${waiting.opacity}`)
-  check('the pool is never desaturated', waiting.filter === 'none', waiting.filter)
+  check('the pool pieces are never desaturated', waiting.filter === 'none', waiting.filter)
   check('the live pool is at full strength', +dormant === 1, `opacity ${dormant}`)
+  await ctx.close()
+}
+
+// ── Acting on the surface that is not yours ─────────────────────────────────
+// Half of every turn belongs to the board and half to the pool. Touching the
+// wrong one used to do nothing at all, which reads as a broken app.
+{
+  const { p, ctx, errors } = await open()
+  await begin(p)
+  await p.locator('[data-cell="5"]').click({ force: true })
+  await p.waitForTimeout(150)
+  const nudge = await p.locator('.status__next[data-nudge="true"]').textContent().catch(() => null)
+  check('a board tap while choosing says which way round the turn is', /choose a piece/i.test(nudge ?? ''), String(nudge))
+  check('the live surface answers', (await p.locator('.stage[data-refuse="true"]').count()) === 1)
+  await p.waitForTimeout(900)
+  check('the nudge clears itself', (await p.locator('.status__next[data-nudge="true"]').count()) === 0)
+
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(600)
+  await p.locator('[data-piece="6"]').click({ force: true })
+  await p.waitForTimeout(150)
+  const back = await p.locator('.status__next[data-nudge="true"]').textContent().catch(() => null)
+  check('a pool tap while placing says the same', /place the piece/i.test(back ?? ''), String(back))
+  check('no console errors while refusing', errors.length === 0, errors.join('; '))
+  await ctx.close()
+}
+
+// ── Both surfaces stay readable to assistive tech ───────────────────────────
+// Which pieces are left, and what is already on the board, is what a player
+// plans with — including in the half of the turn they cannot act in.
+{
+  const { p, ctx } = await open()
+  await begin(p)
+  check(
+    'board cells are never truly disabled',
+    await p.evaluate(() => [...document.querySelectorAll('.cell')].every((c) => !c.disabled)),
+  )
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(600)
+  check(
+    'pool slots are never truly disabled',
+    await p.evaluate(() => [...document.querySelectorAll('.slot')].every((s) => !s.disabled)),
+  )
+  const stops = await p.evaluate(() =>
+    [...document.querySelectorAll('.cell,.slot')].filter((e) => e.tabIndex === 0).map((e) => e.className),
+  )
+  check('only the live surface is a tab stop', stops.length === 1 && stops[0] === 'cell', JSON.stringify(stops))
+  check('the game screen has exactly one h1', (await p.locator('h1').count()) === 1)
+  await ctx.close()
+}
+
+// ── A game in progress survives being closed ────────────────────────────────
+{
+  const { p, ctx } = await open()
+  await begin(p)
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(400)
+  await p.locator('[data-cell="5"]').click()
+  await p.waitForTimeout(600)
+  await p.locator('[data-piece="6"]').click()
+  await p.waitForTimeout(600)
+  const before = await p.evaluate(() => ({
+    status: document.querySelector('.status').textContent,
+    pool: document.querySelectorAll('.slot[data-state="available"]').length,
+    board: document.querySelectorAll('.cell__piece').length,
+  }))
+
+  await p.reload({ waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.waitForTimeout(400)
+  check('the start screen leads with the saved game', (await p.getByRole('button', { name: 'Resume game' }).count()) === 1)
+  await p.getByRole('button', { name: 'Resume game' }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(600)
+  const after = await p.evaluate(() => ({
+    status: document.querySelector('.status').textContent,
+    pool: document.querySelectorAll('.slot[data-state="available"]').length,
+    board: document.querySelectorAll('.cell__piece').length,
+  }))
+  check('resuming restores the turn', before.status === after.status, `${before.status} vs ${after.status}`)
+  check('resuming restores the pool', before.pool === after.pool, `${before.pool} vs ${after.pool}`)
+  check('resuming restores the board', before.board === after.board, `${before.board} vs ${after.board}`)
+  await ctx.close()
+}
+
+// ── A home-screen shortcut goes straight into a game ────────────────────────
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  const p = await ctx.newPage()
+  await p.goto(`${URL}?new=computer`, { waitUntil: 'domcontentloaded' })
+  await p.waitForTimeout(1200)
+  check('a shortcut skips the start screen', (await p.locator('.setup__title').count()) === 0)
+  check('a shortcut picks its mode', (await p.locator('.topbar__mode').textContent()).includes('Vs computer'))
+  check('a shortcut cleans the URL behind it', !p.url().includes('new='), p.url())
   await ctx.close()
 }
 
@@ -430,7 +578,7 @@ for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const p = await ctx.newPage()
   await p.goto(URL, { waitUntil: 'domcontentloaded' })
   await p.waitForSelector('.setup__title')
-  await p.getByRole('button', { name: 'Begin' }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(300)
   const overflow = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

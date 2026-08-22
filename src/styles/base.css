@@ -1,6 +1,8 @@
 /* ── Tokens ──────────────────────────────────────────────────────────────── */
 
 :root {
+  color-scheme: light;
+
   /* Warm paper ground. The board is the only dark mass on the page. */
   --paper: #e9e3d7;
   --paper-deep: #e2dbcc;
@@ -18,6 +20,15 @@
   --accent-warm: #d9663a;
   --accent-lift: rgba(171, 69, 35, 0.12);
 
+  /*
+   * The second semantic colour, and the only one. Caution, never invitation:
+   * cool where the accent is warm, so "you may act here" and "acting here
+   * hands over the game" can never be read for one another.
+   */
+  --danger: #2f5d63;
+  --danger-bright: #3f8792;
+  --danger-lift: rgba(63, 135, 146, 0.16);
+
   /* Smoked oak slab — held dark and low in chroma so the pieces carry the eye. */
   --wood-hi: #443729;
   --wood: #362b20;
@@ -26,6 +37,30 @@
   --socket: #241c14;
   --socket-lo: #150f09;
 
+  /* The slab's own three stops, so the board and the rules demo cannot drift. */
+  --slab-hi: #403426;
+  --slab-mid: #32281e;
+  --slab-lo: #261e15;
+
+  /* The pool's tray — a cloth the pieces rest on, lighter than the paper. */
+  --tray-face: #efe8db;
+  --tray-face-lo: #e4dccd;
+  --tray-rim: rgba(94, 76, 50, 0.2);
+
+  /* Control faces as tokens, so a variant that clears the face stays cleared
+     in both palettes rather than losing a specificity argument to one. */
+  --btn-face: linear-gradient(180deg, rgba(255, 253, 247, 0.7), rgba(255, 253, 247, 0.24));
+  --field-face: rgba(255, 253, 247, 0.5);
+  --slot-rule: rgba(94, 76, 50, 0.16);
+  --slot-well: radial-gradient(closest-side, rgba(94, 76, 50, 0.26), rgba(94, 76, 50, 0.13));
+  --slot-well-shadow: inset 0 2px 3px rgba(84, 66, 42, 0.4), 0 1px 0 rgba(255, 255, 255, 0.5);
+  --scrim-face: rgba(38, 30, 20, 0.42);
+
+  /* The light in the room the table stands in. */
+  --ground-glow:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 253, 246, 0.85), transparent 62%),
+    radial-gradient(90% 70% at 50% 120%, rgba(150, 132, 104, 0.16), transparent 60%);
+
   --shadow-sm: 0 1px 2px rgba(41, 31, 20, 0.14);
   --shadow-md: 0 2px 6px rgba(41, 31, 20, 0.12), 0 8px 20px -8px rgba(41, 31, 20, 0.28);
   --shadow-lg: 0 1px 2px rgba(33, 26, 18, 0.2), 0 24px 60px -18px rgba(33, 26, 18, 0.5);
@@ -33,6 +68,12 @@
     0 1px 1px rgba(33, 26, 18, 0.3),
     0 10px 22px -10px rgba(33, 26, 18, 0.45),
     0 34px 60px -28px rgba(33, 26, 18, 0.5);
+  /* The same slab, set down: it loses its throw, not its edge. */
+  --shadow-slab-rest:
+    0 1px 1px rgba(33, 26, 18, 0.26),
+    0 4px 10px -6px rgba(33, 26, 18, 0.3);
+  --shadow-tray: 0 1px 0 rgba(255, 253, 247, 0.7), 0 6px 16px -10px rgba(41, 31, 20, 0.4);
+  --shadow-tray-rest: 0 1px 0 rgba(255, 253, 247, 0.4);
 
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
@@ -43,6 +84,34 @@
   --r-md: 6px;
   --r-slab: 8px;
 
+  /*
+   * Seven type steps and nothing else. Anything that wants an eighth is either
+   * one of these in disguise or a mistake.
+   */
+  --t-xs: 11px;    /* eyebrows, keycaps, the smallest metadata */
+  --t-sm: 12.5px;  /* state labels, secondary status, hints */
+  --t-md: 13px;    /* controls */
+  --t-base: 15px;  /* body copy */
+  --t-lg: 17px;    /* the status line, rule leads */
+  --t-xl: 21px;    /* section titles inside sheets */
+  --t-2xl: 30px;   /* display: sheet titles, the result headline */
+
+  /* Three line heights, bound to what they are for. */
+  --lh-tight: 1.15;
+  --lh-ui: 1.45;
+  --lh-prose: 1.6;
+
+  /* A 4px spacing scale. Every gap, pad and margin comes from here. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
   /* Every control in the app is one of these two heights. */
   --ctl-h: 36px;
   --ctl-h-lg: 44px;
@@ -52,6 +121,9 @@
   --dur-fast: 130ms;
   --dur: 220ms;
   --dur-slow: 380ms;
+  /* The one duration that exists to be understood rather than felt: the swap
+     between the two halves of a turn. */
+  --dur-phase: 200ms;
 
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -60,7 +132,7 @@
 
   /* Page inset. The top bar and the game share it, so the whole page has one
      left edge instead of two. */
-  --gutter: 24px;
+  --gutter: var(--s-6);
 
   /*
    * The composition's own measurements. They live here rather than on the
@@ -70,14 +142,136 @@
    */
   --rail-w: clamp(232px, 24vw, 296px);
   --stage-gap-x: clamp(24px, 4vw, 56px);
-  --board-max: 560px;
+  /*
+   * A tall desktop used to leave a quarter of the viewport empty above and
+   * below a board that had stopped growing. The board is the game; if there is
+   * room for more of it, it takes it.
+   */
+  --board-max: 640px;
   /* Everything above and below the board on this layout, rounded up. */
   --chrome-h: 210px;
+  /*
+   * The rail is the other column, and on a short screen it is the taller one.
+   * Sizing the board only from the viewport is what used to push the pool off
+   * the bottom, so the board is capped by whichever column actually binds.
+   */
+  --rail-min-h: 470px;
   --board-size: min(
     var(--board-max),
     max(180px, calc(100dvh - var(--safe-t) - var(--safe-b) - var(--chrome-h)))
   );
   --frame: calc(var(--board-size) + var(--stage-gap-x) + var(--rail-w));
+}
+
+/* ── Dark ────────────────────────────────────────────────────────────────── */
+
+/*
+ * The same set under a lamp rather than a different design: the slab keeps its
+ * grain and its milled edge, the pieces keep bone against blackened steel, and
+ * the ground becomes the dark room the table stands in. Only the tokens change.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --paper: #191512;
+    --paper-deep: #14110e;
+    --paper-sunk: #100d0b;
+    --paper-raised: #252019;
+
+    --ink: #f2ece0;
+    --ink-2: #c3b8a6;
+    --ink-3: #9d9282;
+    --hairline: rgba(242, 236, 224, 0.14);
+    --hairline-strong: rgba(242, 236, 224, 0.26);
+
+    --accent: #e0824f;
+    --accent-warm: #f0985f;
+    --accent-lift: rgba(224, 130, 79, 0.16);
+
+    --danger: #7fc2cc;
+    --danger-bright: #98d6df;
+    --danger-lift: rgba(152, 214, 223, 0.18);
+
+    /* Lighter than the paper here, as in daylight: the steel pieces have to
+       stand off the tray, and in the dark they are the ones at risk. */
+    --tray-face: #322b22;
+    --tray-face-lo: #292219;
+    --tray-rim: rgba(242, 236, 224, 0.12);
+
+    --btn-face: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.02));
+    --field-face: rgba(255, 246, 230, 0.04);
+    --slot-rule: rgba(242, 236, 224, 0.1);
+    --slot-well: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.28));
+    --slot-well-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(242, 236, 224, 0.05);
+    --scrim-face: rgba(0, 0, 0, 0.62);
+    --ground-glow:
+      radial-gradient(120% 80% at 50% -10%, rgba(255, 226, 178, 0.07), transparent 62%),
+      radial-gradient(90% 70% at 50% 120%, rgba(0, 0, 0, 0.5), transparent 60%);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 20px -8px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.5), 0 24px 60px -18px rgba(0, 0, 0, 0.75);
+    --shadow-slab:
+      0 1px 1px rgba(0, 0, 0, 0.6),
+      0 10px 22px -10px rgba(0, 0, 0, 0.7),
+      0 34px 60px -28px rgba(0, 0, 0, 0.8);
+    --shadow-slab-rest:
+      0 1px 1px rgba(0, 0, 0, 0.5),
+      0 4px 10px -6px rgba(0, 0, 0, 0.5);
+    --shadow-tray: 0 1px 0 rgba(242, 236, 224, 0.07), 0 6px 16px -10px rgba(0, 0, 0, 0.7);
+    --shadow-tray-rest: 0 1px 0 rgba(242, 236, 224, 0.04);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #191512;
+  --paper-deep: #14110e;
+  --paper-sunk: #100d0b;
+  --paper-raised: #252019;
+
+  --ink: #f2ece0;
+  --ink-2: #c3b8a6;
+  --ink-3: #9d9282;
+  --hairline: rgba(242, 236, 224, 0.14);
+  --hairline-strong: rgba(242, 236, 224, 0.26);
+
+  --accent: #e0824f;
+  --accent-warm: #f0985f;
+  --accent-lift: rgba(224, 130, 79, 0.16);
+
+  --danger: #7fc2cc;
+  --danger-bright: #98d6df;
+  --danger-lift: rgba(152, 214, 223, 0.18);
+
+  --tray-face: #322b22;
+  --tray-face-lo: #292219;
+  --tray-rim: rgba(242, 236, 224, 0.12);
+
+  --btn-face: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.02));
+  --field-face: rgba(255, 246, 230, 0.04);
+  --slot-rule: rgba(242, 236, 224, 0.1);
+  --slot-well: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.28));
+  --slot-well-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(242, 236, 224, 0.05);
+  --scrim-face: rgba(0, 0, 0, 0.62);
+  --ground-glow:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 226, 178, 0.07), transparent 62%),
+    radial-gradient(90% 70% at 50% 120%, rgba(0, 0, 0, 0.5), transparent 60%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 20px -8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.5), 0 24px 60px -18px rgba(0, 0, 0, 0.75);
+  --shadow-slab:
+    0 1px 1px rgba(0, 0, 0, 0.6),
+    0 10px 22px -10px rgba(0, 0, 0, 0.7),
+    0 34px 60px -28px rgba(0, 0, 0, 0.8);
+  --shadow-slab-rest:
+    0 1px 1px rgba(0, 0, 0, 0.5),
+    0 4px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-tray: 0 1px 0 rgba(242, 236, 224, 0.07), 0 6px 16px -10px rgba(0, 0, 0, 0.7);
+  --shadow-tray-rest: 0 1px 0 rgba(242, 236, 224, 0.04);
 }
 
 /* Both the OS preference and the in-app switch collapse motion to nothing. */
@@ -86,6 +280,7 @@
     --dur-fast: 1ms;
     --dur: 1ms;
     --dur-slow: 1ms;
+    --dur-phase: 1ms;
   }
 }
 
@@ -93,6 +288,7 @@ html[data-motion='reduced'] {
   --dur-fast: 1ms;
   --dur: 1ms;
   --dur-slow: 1ms;
+  --dur-phase: 1ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -134,8 +330,8 @@ body,
 
 body {
   font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: var(--t-base);
+  line-height: var(--lh-prose);
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
@@ -153,9 +349,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(255, 253, 246, 0.85), transparent 62%),
-    radial-gradient(90% 70% at 50% 120%, rgba(150, 132, 104, 0.16), transparent 60%);
+  background: var(--ground-glow);
 }
 
 button {
@@ -171,6 +365,7 @@ svg {
   display: block;
 }
 
+/* One ring, one colour. Only the offset varies, and only where a frame clips. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -190,23 +385,41 @@ svg {
 
 /* ── Typography ──────────────────────────────────────────────────────────── */
 
+/*
+ * Two labels, deliberately different sizes. An eyebrow names a section of a
+ * document and may be small; a state label says whose move it is and what this
+ * surface is for, so it is read at a glance and never carries meaning on
+ * colour alone.
+ */
 .eyebrow {
-  font-size: 10.5px;
+  font-size: var(--t-xs);
   font-weight: 500;
   letter-spacing: 0.16em;
-  line-height: 1.4;
+  line-height: var(--lh-ui);
   text-transform: uppercase;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
-.eyebrow[data-accent='true'] {
+.state-label {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-phase) var(--ease-out);
+}
+
+.state-label[data-accent='true'] {
   color: var(--accent);
 }
 
 .wordmark {
   font-family: var(--font-display);
   font-size: 25px;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: 0.005em;
   color: var(--ink);
@@ -222,13 +435,13 @@ svg {
   height: var(--ctl-h);
   padding: 0 14px;
   border-radius: var(--r-sm);
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 500;
   letter-spacing: 0.01em;
   white-space: nowrap;
   color: var(--ink-2);
   border: 1px solid var(--hairline);
-  background: linear-gradient(180deg, rgba(255, 253, 247, 0.7), rgba(255, 253, 247, 0.24));
+  background: var(--btn-face);
   transition:
     background var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
@@ -247,8 +460,10 @@ svg {
   transform: translateY(1px);
 }
 
-/* Faint enough to read as unavailable, solid enough to still be legible. */
-.btn:disabled {
+/* Unavailable-because-inert: the one disabled treatment for controls. Faint
+   enough to read as unavailable, solid enough to still be legible. */
+.btn:disabled,
+.btn[aria-disabled='true'] {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -257,13 +472,13 @@ svg {
   color: var(--paper);
   background: var(--ink);
   border-color: var(--ink);
-  padding: 0 20px;
+  padding: 0 var(--s-5);
 }
 
 .btn--primary:hover:not(:disabled) {
   color: var(--paper);
-  background: #33291f;
-  border-color: #33291f;
+  background: var(--ink-2);
+  border-color: var(--ink-2);
 }
 
 .btn--quiet {
@@ -273,7 +488,7 @@ svg {
 }
 
 .btn--quiet:hover:not(:disabled) {
-  background: rgba(255, 253, 247, 0.8);
+  background: var(--paper-raised);
   border-color: var(--hairline);
 }
 
@@ -287,7 +502,7 @@ svg {
 /* The one size step: the start screen's single commitment, and nothing else. */
 .btn--lg {
   height: var(--ctl-h-lg);
-  padding: 0 24px;
+  padding: 0 var(--s-6);
   font-size: 14px;
 }
 
@@ -320,7 +535,7 @@ svg {
   border: 1px solid var(--hairline-strong);
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255, 253, 247, 0.5);
+  background: var(--field-face);
 }
 
 .segmented__option {
@@ -328,8 +543,8 @@ svg {
   align-items: center;
   justify-content: center;
   min-height: var(--ctl-h);
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 6px var(--s-3);
+  font-size: var(--t-md);
   font-weight: 500;
   color: var(--ink-2);
   border-right: 1px solid var(--hairline);
@@ -355,7 +570,7 @@ svg {
 }
 
 .segmented__option:hover:not([aria-checked='true']) {
-  background: rgba(255, 253, 247, 0.95);
+  background: var(--paper-raised);
   color: var(--ink);
 }
 
@@ -365,7 +580,7 @@ svg {
 }
 
 .link {
-  font-size: 13px;
+  font-size: var(--t-md);
   color: var(--ink-3);
   text-decoration: none;
   border-bottom: 1px solid var(--hairline-strong);
@@ -394,9 +609,9 @@ svg {
   height: 100dvh;
   overflow: hidden;
   padding:
-    calc(var(--safe-t) + 12px)
+    calc(var(--safe-t) + var(--s-3))
     calc(var(--safe-r) + var(--gutter))
-    calc(var(--safe-b) + 16px)
+    calc(var(--safe-b) + var(--s-4))
     calc(var(--safe-l) + var(--gutter));
 }
 
@@ -416,12 +631,12 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--s-4);
   width: 100%;
   max-width: var(--frame);
   margin-inline: auto;
   padding-bottom: 11px;
-  margin-bottom: clamp(14px, 2.6vh, 32px);
+  margin-bottom: clamp(14px, 2.6vh, var(--s-8));
   border-bottom: 1px solid var(--hairline);
   flex-shrink: 0;
 }
@@ -433,8 +648,14 @@ svg {
   min-width: 0;
 }
 
+/* The game screen's heading. It looks exactly like the wordmark because it is
+   the wordmark — the document simply had no heading before. */
+h1.wordmark {
+  font-size: 25px;
+}
+
 .topbar__mode {
-  font-size: 12px;
+  font-size: var(--t-sm);
   letter-spacing: 0.04em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -449,13 +670,13 @@ svg {
   height: 1px;
   background: var(--hairline-strong);
   vertical-align: 4px;
-  margin-right: 12px;
+  margin-right: var(--s-3);
 }
 
 .topbar__right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--s-1);
   flex-shrink: 0;
 }
 
@@ -465,32 +686,53 @@ svg {
   :root {
     /* Status, tray, pool header and the pool itself all sit above or below the
        board here, so the board's height budget is much smaller. */
-    --chrome-h: 412px;
-    --frame: 520px;
+    --chrome-h: 400px;
+    /*
+     * Wide enough for the board to reach its cap on a tablet instead of being
+     * held to a phone's column with a third of the screen left empty, and
+     * still narrow enough that the pool's eight slots stay a comfortable size.
+     */
+    --frame: 640px;
   }
 }
 
 @media (max-width: 400px) {
   :root {
-    --chrome-h: 368px;
+    --chrome-h: 360px;
   }
 }
 
 /* Turned sideways there is almost no height and a great deal of width, so the
-   rail takes whatever the board does not need. */
+   board takes the height it can and the hand and pool share the rest. */
 @media (max-height: 560px) and (min-width: 620px) {
   :root {
-    --chrome-h: 168px;
+    --chrome-h: 148px;
     --frame: none;
   }
 }
 
 @media (max-width: 560px) {
   :root {
-    --gutter: 16px;
+    --gutter: var(--s-4);
   }
   .topbar__mode {
     display: none;
+  }
+}
+
+/*
+ * A phone's top bar spends height on controls that are used once a game. The
+ * wordmark stays — it is the heading — and everything else collapses behind a
+ * single menu, which is worth roughly 40px of board.
+ */
+@media (max-width: 619px) {
+  .topbar {
+    padding-bottom: var(--s-2);
+    margin-bottom: var(--s-3);
+  }
+  h1.wordmark,
+  .wordmark {
+    font-size: 21px;
   }
 }
 
@@ -515,9 +757,101 @@ svg {
 
 @media (max-width: 560px) {
   .topbar__update {
-    padding: 0 8px;
+    padding: 0 var(--s-2);
   }
   .topbar__update::before {
     margin-right: -2px;
+  }
+}
+
+/* ── Overflow menu ───────────────────────────────────────────────────────── */
+
+.menu {
+  position: relative;
+}
+
+.menu__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 194px;
+  padding: var(--s-1);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  animation: menu-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: var(--ctl-h-lg);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.menu__item:hover {
+  background: var(--accent-lift);
+  color: var(--ink);
+}
+
+.menu__item:focus-visible {
+  outline-offset: -3px;
+}
+
+.menu__value {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.menu__sep {
+  height: 1px;
+  margin: var(--s-1) 6px;
+  background: var(--hairline);
+}
+
+/* ── Top-bar control sets ────────────────────────────────────────────────── */
+
+.topbar__wide {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.topbar__narrow {
+  display: none;
+}
+
+@media (max-width: 619px) {
+  .topbar__wide {
+    display: none;
+  }
+  .topbar__narrow {
+    display: block;
   }
 }

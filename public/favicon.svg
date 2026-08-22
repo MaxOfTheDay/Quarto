@@ -68,39 +68,16 @@
 
   <rect width="512" height="512" rx="64" fill="url(#oak)"/>
   <rect width="512" height="512" rx="64" fill="url(#lamp)"/>
-  <rect x="58" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
-    <rect x="58" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
-    <rect x="58" y="60.64726" width="189.09" height="189.09" rx="17.0181"
-          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
-  <rect x="264.90999999999997" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
-    <rect x="264.90999999999997" y="58" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
-    <rect x="264.90999999999997" y="60.64726" width="189.09" height="189.09" rx="17.0181"
-          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
-  <rect x="58" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
-    <rect x="58" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
-    <rect x="58" y="267.55726" width="189.09" height="189.09" rx="17.0181"
-          fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
-  <rect x="264.90999999999997" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socket)"/>
-    <rect x="264.90999999999997" y="264.90999999999997" width="189.09" height="189.09" rx="17.0181" fill="url(#socketTop)"/>
-    <rect x="264.90999999999997" y="267.55726" width="189.09" height="189.09" rx="17.0181"
+  <rect x="84" y="84" width="344" height="344" rx="30.959999999999997" fill="url(#socket)"/>
+    <rect x="84" y="84" width="344" height="344" rx="30.959999999999997" fill="url(#socketTop)"/>
+    <rect x="84" y="88.816" width="344" height="344" rx="30.959999999999997"
           fill="none" stroke="#ffe4bc" stroke-opacity="0.1" stroke-width="2.56"/>
 
-  <ellipse cx="152.54500000000002" cy="226.342625" rx="74.12328000000001" ry="20.516265" fill="url(#cast)"/>
-  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="url(#body-l)"/>
-  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="url(#sheen)"/>
-  <path d="M 86.36350000000002 106.11290000000001 V 205.38515 A 66.1815 22.79585 0 0 0 218.72650000000002 205.38515 V 106.11290000000001 Z" fill="none" stroke="#543f24" stroke-opacity="0.34" stroke-width="1.2868625"/>
-  <ellipse cx="152.54500000000002" cy="106.11290000000001" rx="66.1815" ry="22.79585" fill="url(#top-l)"
-                stroke="#543f24" stroke-opacity="0.3" stroke-width="1.2868625"/>
-  <ellipse cx="152.54500000000002" cy="106.11290000000001" rx="33.09075" ry="11.397925" fill="url(#well-l)"/>
-         <path d="M 119.45425000000002 106.11290000000001 A 33.09075 11.397925 0 0 0 185.63575000000003 106.11290000000001" fill="none"
-               stroke="#fffaec" stroke-opacity="0.6" stroke-width="1.4707000000000001"/>
-
-  <ellipse cx="359.455" cy="433.252625" rx="74.12328000000001" ry="20.516265" fill="url(#cast)"/>
-  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="url(#body-d)"/>
-  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="url(#facet)"/>
-  <path d="M 293.2735 394.64675 H 425.63649999999996 V 435.091 H 293.2735 Z" fill="none" stroke="#fffcf4" stroke-opacity="0.13" stroke-width="1.2868625"/>
-  <path d="M 293.2735 394.64675 H 425.63649999999996 L 415.70927499999993 349.05505000000005 H 303.20072500000003 Z"
-             fill="url(#top-d)" stroke="#fffcf4" stroke-opacity="0.2"
-             stroke-width="1.2868625" stroke-linejoin="round"/>
+  <ellipse cx="256" cy="390.35111111111115" rx="130.9952" ry="36.257600000000004" fill="url(#cast)"/>
+  <path d="M 139.04000000000002 177.87377777777778 V 353.3137777777778 A 116.96 40.28622222222222 0 0 0 372.96 353.3137777777778 V 177.87377777777778 Z" fill="url(#body-l)"/>
+  <path d="M 139.04000000000002 177.87377777777778 V 353.3137777777778 A 116.96 40.28622222222222 0 0 0 372.96 353.3137777777778 V 177.87377777777778 Z" fill="url(#sheen)"/>
+  <path d="M 139.04000000000002 177.87377777777778 V 353.3137777777778 A 116.96 40.28622222222222 0 0 0 372.96 353.3137777777778 V 177.87377777777778 Z" fill="none" stroke="#543f24" stroke-opacity="0.34" stroke-width="2.274222222222222"/>
+  <ellipse cx="256" cy="177.87377777777778" rx="116.96" ry="40.28622222222222" fill="url(#top-l)"
+                stroke="#543f24" stroke-opacity="0.3" stroke-width="2.274222222222222"/>
   
 </svg>

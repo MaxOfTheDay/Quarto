@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#e9e3d7" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- The chrome around the app follows the ground the app is actually on. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9e3d7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#191512" />
     <meta
       name="description"
       content="Quarto — the abstract strategy game where your opponent chooses the piece you play."
@@ -20,6 +22,14 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Quarto" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      // The stored theme has to be on the root before first paint, or an
+      // installed app opens with a flash of the wrong ground.
+      try {
+        var t = JSON.parse(localStorage.getItem('quarto.prefs.v2') || '{}').theme
+        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

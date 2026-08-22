@@ -1,18 +1,35 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { SIZE, describePiece, type Board as BoardModel, type WinLine } from '../game'
+import { SIZE, describePiece, type Board as BoardModel, type PieceId, type WinLine } from '../game'
 import { PieceGlyph } from './PieceGlyph'
 
 export interface BoardProps {
   board: BoardModel
   /** True while the local player may drop the piece they are holding. */
   placing: boolean
+  /** The piece being placed, drawn as a ghost under the pointer. */
+  hand: PieceId | null
   lastPlaced: number | null
   win: WinLine | null
+  /** Cells where the piece in hand completes a Quarto. Empty unless coaching. */
+  winningCells: readonly number[]
   onPlace: (cell: number) => void
+  /** Called when the board is acted on while it is not this player's to use. */
+  onRefuse?: () => void
 }
 
-export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) {
+export function Board({
+  board,
+  placing,
+  hand,
+  lastPlaced,
+  win,
+  winningCells,
+  onPlace,
+  onRefuse,
+}: BoardProps) {
   const [cursor, setCursor] = useState(0)
+  const [hover, setHover] = useState<number | null>(null)
+  const [focused, setFocused] = useState<number | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const winCells = win ? win.cells : null
 
@@ -23,6 +40,13 @@ export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) 
     const next = board.findIndex((c) => c === null)
     if (next >= 0) setCursor(next)
   }, [placing, board, cursor])
+
+  useEffect(() => {
+    if (!placing) {
+      setHover(null)
+      setFocused(null)
+    }
+  }, [placing])
 
   const move = (from: number, dx: number, dy: number) => {
     const x = from % SIZE
@@ -55,7 +79,7 @@ export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) 
   }
 
   return (
-    <div className="board__slab">
+    <div className="board__slab" data-live={placing ? 'true' : undefined}>
       <div
         ref={gridRef}
         className="board__grid"
@@ -66,56 +90,83 @@ export function Board({ board, placing, lastPlaced, win, onPlace }: BoardProps) 
         {Array.from({ length: SIZE }, (_, row) => (
           <div className="board__row" role="row" key={row}>
             {Array.from({ length: SIZE }, (_, col) => {
-                const cell = row * SIZE + col
-                const piece = board[cell]
-                const isWinner = winCells?.includes(cell) ?? false
-                const open = piece === null
-                const targetable = placing && open
-                const style = {
-                  '--win-index': winCells ? winCells.indexOf(cell) : 0,
-                } as CSSProperties
+              const cell = row * SIZE + col
+              const piece = board[cell]
+              const isWinner = winCells?.includes(cell) ?? false
+              const open = piece === null
+              const targetable = placing && open
+              const wins = targetable && winningCells.includes(cell)
+              const style = {
+                '--win-index': winCells ? winCells.indexOf(cell) : 0,
+                /* Target dots arrive across the board rather than all at once,
+                   which is what makes the change of phase legible. */
+                '--target-index': (row + col) % 7,
+              } as CSSProperties
 
-                return (
-                  <div
-                    className="board__cellwrap"
-                    role="gridcell"
-                    key={cell}
-                    data-won={isWinner ? 'true' : undefined}
-                    style={style}
+              return (
+                <div
+                  className="board__cellwrap"
+                  role="gridcell"
+                  key={cell}
+                  data-won={isWinner ? 'true' : undefined}
+                  style={style}
+                >
+                  <button
+                    type="button"
+                    data-cell={cell}
+                    className="cell"
+                    data-state={isWinner ? 'won' : open ? 'open' : 'filled'}
+                    data-target={targetable ? 'true' : undefined}
+                    data-wins={wins ? 'true' : undefined}
+                    data-ghost={hover === cell || focused === cell ? 'true' : undefined}
+                    data-last={cell === lastPlaced && !win ? 'true' : undefined}
+                    data-dim={win && !isWinner && !open ? 'true' : undefined}
+                    /*
+                     * `aria-disabled` rather than `disabled`, so the position
+                     * stays readable to a screen reader during the half of the
+                     * turn when the board is not the live surface. The roving
+                     * tab stop is withdrawn all the same, so keyboard focus
+                     * still only ever lands on the surface that can be used.
+                     */
+                    aria-disabled={targetable ? undefined : 'true'}
+                    tabIndex={placing && cell === cursor ? 0 : -1}
+                    onFocus={() => {
+                      setCursor(cell)
+                      setFocused(cell)
+                    }}
+                    onBlur={() => setFocused((f) => (f === cell ? null : f))}
+                    onKeyDown={(e) => onKeyDown(e, cell)}
+                    onPointerEnter={() => targetable && setHover(cell)}
+                    onPointerLeave={() => setHover((h) => (h === cell ? null : h))}
+                    onClick={() => (targetable ? onPlace(cell) : onRefuse?.())}
+                    aria-label={
+                      piece === null
+                        ? `Row ${row + 1}, column ${col + 1}, empty${wins ? ', wins here' : ''}`
+                        : `Row ${row + 1}, column ${col + 1}, ${describePiece(piece)}`
+                    }
                   >
-                    <button
-                      type="button"
-                      data-cell={cell}
-                      className="cell"
-                      data-state={isWinner ? 'won' : open ? 'open' : 'filled'}
-                      data-target={targetable ? 'true' : undefined}
-                      data-dim={win && !isWinner && !open ? 'true' : undefined}
-                      disabled={!targetable}
-                      tabIndex={cell === cursor ? 0 : -1}
-                      onFocus={() => setCursor(cell)}
-                      onKeyDown={(e) => onKeyDown(e, cell)}
-                      onClick={() => targetable && onPlace(cell)}
-                      aria-label={
-                        piece === null
-                          ? `Row ${row + 1}, column ${col + 1}, empty`
-                          : `Row ${row + 1}, column ${col + 1}, ${describePiece(piece)}`
-                      }
-                    >
-                      <span className="cell__socket" aria-hidden="true" />
-                      <span className="cell__target" aria-hidden="true" />
-                      {piece !== null && (
-                        <span
-                          className="cell__piece"
-                          data-drop={cell === lastPlaced ? 'true' : undefined}
-                          key={piece}
-                        >
-                          <PieceGlyph piece={piece} className="piece" />
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                )
-              })}
+                    <span className="cell__socket" aria-hidden="true" />
+                    <span className="cell__target" aria-hidden="true" />
+                    {piece !== null && (
+                      <span
+                        className="cell__piece"
+                        data-drop={cell === lastPlaced ? 'true' : undefined}
+                        key={piece}
+                      >
+                        <PieceGlyph piece={piece} className="piece" />
+                      </span>
+                    )}
+                    {/* What you are about to put here, where you are about to
+                        put it — so the question never needs a glance away. */}
+                    {targetable && hand !== null && (hover === cell || focused === cell) && (
+                      <span className="cell__ghost" aria-hidden="true" data-hover={hover === cell ? 'true' : undefined}>
+                        <PieceGlyph piece={hand} className="piece" />
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         ))}
       </div>
