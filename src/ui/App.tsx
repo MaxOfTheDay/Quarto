@@ -51,11 +51,11 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function App() {
   const [prefs, setPrefs] = usePrefs()
-  const [saved, setSaved] = useState<SavedGame | null>(() => loadSave())
   /*
    * A long-press on the home-screen icon asks for a specific game. Read once,
    * and stripped from the URL immediately so a reload does not silently throw
-   * away whatever is being played by then.
+   * away whatever is being played by then. It is read before the saved game,
+   * because asking for a new one has to beat reopening the old one.
    */
   const [shortcut] = useState<Mode | null>(() => {
     if (typeof window === 'undefined') return null
@@ -64,9 +64,18 @@ export function App() {
     window.history.replaceState(null, '', window.location.pathname)
     return asked
   })
-  const [session, setSession] = useState<Session | null>(null)
-  const [history, setHistory] = useState<GameState[]>(() => [createGame(0)])
-  const [showSetup, setShowSetup] = useState(true)
+
+  /*
+   * A game left unfinished simply opens again, the way a board left on a table
+   * is still there in the morning. Asking "resume or not?" put a decision in
+   * front of a player who came to play, made declining it cost two taps, and
+   * described the position in metadata nobody chooses on. Starting something
+   * else is one tap away in the menu, and the status line says where you are.
+   */
+  const [saved] = useState<SavedGame | null>(() => (shortcut ? null : loadSave()))
+  const [session, setSession] = useState<Session | null>(() => saved?.session ?? null)
+  const [history, setHistory] = useState<GameState[]>(() => saved?.history ?? [createGame(0)])
+  const [showSetup, setShowSetup] = useState(() => saved === null)
   const [showRules, setShowRules] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [confirmRestart, setConfirmRestart] = useState(false)
@@ -362,7 +371,6 @@ export function App() {
     })
     setPrefs({ gamesPlayed: prefs.gamesPlayed + 1 })
     clearSave()
-    setSaved(null)
   }, [state, session, prefs.gamesPlayed, setPrefs])
 
   /* ── Saving ───────────────────────────────────────────────────────────── */
@@ -396,7 +404,6 @@ export function App() {
     setShowSetup(false)
     setPrefs({ seenIntro: true, mode })
     clearSave()
-    setSaved(null)
     },
     [prefs, setPrefs],
   )
@@ -407,17 +414,6 @@ export function App() {
     startedFromShortcut.current = true
     startGame(shortcut)
   }, [shortcut, startGame])
-
-  const resume = useCallback(() => {
-    if (!saved) return
-    setSession(saved.session)
-    setHistory(saved.history)
-    plannedGift.current = -1
-    scored.current = null
-    setThinking(false)
-    setShowSetup(false)
-    setPrefs({ seenIntro: true })
-  }, [saved, setPrefs])
 
   const rematch = useCallback(() => {
     plannedGift.current = -1
@@ -431,10 +427,7 @@ export function App() {
     else setShowSetup(true)
   }, [state])
 
-  const openSetup = useCallback(() => {
-    setSaved(loadSave())
-    setShowSetup(true)
-  }, [])
+  const openSetup = useCallback(() => setShowSetup(true), [])
 
   const canUndo = history.length > 1 && !thinking && !isAiTurn && !showSetup
 
@@ -457,11 +450,23 @@ export function App() {
   /* ── New builds ───────────────────────────────────────────────────────── */
 
   useEffect(() => {
-    // On the start screen there is no position to lose, so a waiting build is
-    // taken silently. Mid-game it waits behind a quiet control instead — which
-    // together means nobody can end up stranded on an old version.
-    if (updateReady && showSetup) update()
-  }, [updateReady, showSetup, update])
+    /*
+     * A waiting build used to be taken only on the start screen, because the
+     * reload it causes would have thrown the game away. That rule relied on
+     * every session beginning there — and a game left unfinished now reopens
+     * straight into itself, so a player with a game on the go might never see
+     * a start screen again and would sit on an old build indefinitely.
+     *
+     * The premise has changed: the position, its whole history and the running
+     * tally are all saved, so a reload puts the player back exactly where they
+     * were. The update is taken at the next quiet moment instead — the start
+     * screen, or any point where the game is simply waiting on the person
+     * playing it. It still never lands mid-flight or while the computer is
+     * thinking, and the control in the top bar remains for the meantime.
+     */
+    if (!updateReady) return
+    if (showSetup || (localTurn && !thinking)) update()
+  }, [updateReady, showSetup, localTurn, thinking, update])
 
   /* ── Keyboard ─────────────────────────────────────────────────────────── */
 
@@ -711,8 +716,6 @@ export function App() {
           onChange={setPrefs}
           onStart={() => startGame()}
           onRules={() => setShowRules(true)}
-          saved={saved}
-          onResume={resume}
           onInstall={canInstall ? install : undefined}
           onDismiss={session ? () => setShowSetup(false) : undefined}
         />

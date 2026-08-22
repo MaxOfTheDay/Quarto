@@ -4,8 +4,8 @@ A web implementation of Quarto, the abstract strategy game where you never
 choose your own piece — your opponent hands you one, you place it, and then you
 choose theirs.
 
-Installable on Android and playable offline. A game in progress is kept, so
-closing the tab loses nothing. Pushing to `main` deploys it.
+Installable on Android and playable offline. A game left unfinished simply
+opens again where it was. Pushing to `main` deploys it.
 
 Four pieces in a line that share **any one** of four attributes — tall/short,
 dark/light, square/round, hollow/solid — wins, no matter who placed them.
@@ -57,10 +57,12 @@ Updates are the part that usually breaks. Two things make it reliable:
   precached with a `?v=<content hash>` suffix. Pages serves with a `max-age`,
   and without this a new worker will cheerfully precache the *previous* deploy
   straight out of the HTTP cache.
-- A new worker never activates under a game in progress. On the start screen it
-  applies silently; mid-game it waits behind an **Update ready** control. Since
-  every session begins on the start screen, nobody can get stranded on an old
-  build either way.
+- A new worker is taken at the next quiet moment — the start screen, or any
+  point where the game is waiting on the person playing it — never mid-flight
+  or while the computer is thinking. It can afford to reload because the
+  position, its history and the running tally are all saved, so the player
+  lands back exactly where they were. A **Restart to update** control in the
+  top bar covers the meantime.
 
 ## Running it
 
@@ -79,7 +81,7 @@ No backend, no analytics, no network calls — fonts are bundled. Preferences an
 the game in progress live in `localStorage`.
 
 There is also a browser suite covering undo, keyboard play, the draw, the
-restart prompt, preferences, saving and resuming a game, the home-screen
+restart prompt, preferences, saving and reopening a game, the home-screen
 shortcuts, acting on the surface that is not yours, horizontal overflow at seven
 widths, the layout at twelve sizes, and a full game against Hard while watching
 for main-thread stalls. Playwright

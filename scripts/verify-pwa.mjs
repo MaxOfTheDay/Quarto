@@ -168,9 +168,6 @@ await page.getByRole('menuitem', { name: 'New game', exact: true }).click()
 await page.waitForTimeout(300)
 await page.getByRole('button', { name: 'Discard and start over' }).click()
 await page.waitForSelector('.setup__title', { timeout: 10000 })
-// A game was in progress, so the start screen leads with Resume; the fields
-// are one step behind it.
-await page.getByRole('button', { name: 'Start something else' }).click()
 await page.getByRole('radio', { name: 'Vs computer', exact: true }).click()
 // "Begin" on a clean start, "Start new game" when a game was left behind.
 await page.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
@@ -195,7 +192,9 @@ execFileSync('node', [join(root, 'scripts/build-sw.mjs'), 'dist-next'], { cwd: r
 servedDir = next
 
 await page.reload({ waitUntil: 'domcontentloaded' })
-await page.waitForSelector('.setup__title', { timeout: 15000 })
+// Either screen means the app booted: a game left unfinished reopens straight
+// into itself rather than onto the start screen.
+await page.waitForSelector('.setup__title, .board__slab', { timeout: 15000 })
 
 // The update applies itself and reloads, so polling has to survive the
 // navigation it is waiting for.
@@ -219,7 +218,7 @@ if (updated) {
   check(caches.length === 1, 'the previous version\'s cache is cleaned up', caches.join(', '))
   await context.setOffline(true)
   await page.reload({ waitUntil: 'domcontentloaded' })
-  await page.waitForSelector('.setup__title', { timeout: 15000 })
+  await page.waitForSelector('.setup__title, .board__slab', { timeout: 15000 })
   const stillNew = await page.evaluate(() => Boolean(document.querySelector('meta[name="build-marker"]')))
   check(stillNew, 'the updated version is the one cached for offline use')
   await context.setOffline(false)

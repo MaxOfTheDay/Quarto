@@ -558,10 +558,8 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   }))
 
   await p.reload({ waitUntil: 'domcontentloaded' })
-  await p.waitForSelector('.setup__title')
-  await p.waitForTimeout(400)
-  check('the start screen leads with the saved game', (await p.getByRole('button', { name: 'Resume game' }).count()) === 1)
-  await p.getByRole('button', { name: 'Resume game' }).click()
+  await p.waitForTimeout(700)
+  check('an unfinished game simply opens again', (await p.locator('.setup__title').count()) === 0)
   await p.waitForSelector('.board__slab')
   await p.waitForTimeout(600)
   const after = await p.evaluate(() => ({
@@ -681,7 +679,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await p.waitForTimeout(4100)
   const away = await p.evaluate(() => window.__seen)
   check('a handed-over piece is marked as the opponent\'s', away.away, JSON.stringify(away))
-  check('it names the owner instead of listing attributes', /places/i.test(away.text), away.text)
+  check('it names the owner rather than the piece', /places/i.test(away.text), away.text)
   check('it is drawn back from full strength', away.dim < 0.8, String(away.dim))
   // ~500ms of rest at 60fps is about 30 frames; anything under 12 is a flash.
   check('it rests long enough to be seen', away.rest >= 12, `${away.rest} frames`)
@@ -693,7 +691,9 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
     dim: +getComputedStyle(document.querySelector('.tray .tray__piece .piece')).opacity,
   }))
   check('a piece handed to you is not marked as theirs', mine.away === undefined)
-  check('yours lists its attributes to study', /(short|tall)/i.test(mine.text), mine.text)
+  // Your own piece needs no caption: the drawing says what it is, and the
+  // status line above says what to do with it.
+  check('yours says nothing the drawing already shows', mine.text.trim() === '', mine.text)
   check('yours is at full strength', mine.dim === 1, String(mine.dim))
   await ctx.close()
 }

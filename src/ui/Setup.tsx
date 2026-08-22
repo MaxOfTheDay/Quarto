@@ -1,8 +1,6 @@
-import { useId, useRef, useState } from 'react'
+import { useId, useRef } from 'react'
 import type { Difficulty } from '../game/ai'
 import type { Mode, Opener, Prefs } from '../lib/prefs'
-import type { SavedGame } from '../lib/save'
-import { describeSaved } from '../lib/save'
 import { QuartoDemo } from './RulesSheet'
 
 export interface SetupProps {
@@ -10,9 +8,6 @@ export interface SetupProps {
   onChange: (patch: Partial<Prefs>) => void
   onStart: () => void
   onRules: () => void
-  /** A game in progress, if one was left behind. */
-  saved: SavedGame | null
-  onResume: () => void
   /** Offered only while the browser is holding an install prompt for us. */
   onInstall?: () => void
   /** Only offered once a game exists to go back to. */
@@ -93,15 +88,10 @@ export function Setup({
   onChange,
   onStart,
   onRules,
-  saved,
-  onResume,
   onInstall,
   onDismiss,
 }: SetupProps) {
   const vsComputer = prefs.mode === 'computer'
-  /* A stored game is the answer to "what now?", so the choices behind it stay
-     folded away until they are actually wanted. */
-  const [showFields, setShowFields] = useState(saved === null)
 
   const openerOptions: Choice<Opener>[] = vsComputer
     ? [
@@ -174,40 +164,12 @@ export function Setup({
           </section>
         )}
 
-        {saved && (
-          <section className="resume" aria-label="Game in progress">
-            <div className="resume__text">
-              <p className="state-label" data-accent="true">
-                Game in progress
-              </p>
-              <p className="resume__detail">{describeSaved(saved)}</p>
-            </div>
-            <button type="button" className="btn btn--primary btn--lg" onClick={onResume}>
-              Resume game
-            </button>
-          </section>
-        )}
+        {fields}
 
-        {saved && !showFields ? (
-          <div className="setup__more">
-            <button type="button" className="link" onClick={() => setShowFields(true)}>
-              Start something else
-            </button>
-          </div>
-        ) : (
-          fields
-        )}
-
-        <footer className="setup__foot" data-quiet={saved && !showFields ? 'true' : undefined}>
-          {(!saved || showFields) && (
-            <button
-              type="button"
-              className={`btn btn--lg${saved ? '' : ' btn--primary'}`}
-              onClick={onStart}
-            >
-              {saved ? 'Start new game' : 'Begin'}
-            </button>
-          )}
+        <footer className="setup__foot">
+          <button type="button" className="btn btn--primary btn--lg" onClick={onStart}>
+            Begin
+          </button>
           <div className="setup__links">
             <button type="button" className="link" onClick={onRules}>
               How to play

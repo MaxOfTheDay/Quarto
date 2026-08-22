@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { describePiece, type PieceId } from '../game'
+import { type PieceId } from '../game'
 import { PieceGlyph } from './PieceGlyph'
 
 export interface HandTrayProps {
@@ -37,7 +37,6 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
   ref,
 ) {
   const shown = piece ?? preview
-  const attributes = shown === null ? [] : describePiece(shown).split(' ')
   const previewing = piece === null && preview !== null
   /*
    * A piece on the shelf that is not yours to place. Handing one over and being
@@ -83,14 +82,23 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
         )}
       </div>
 
+      {/*
+        * Says only what the drawing cannot. The four attributes used to be
+        * spelled out here every turn, which restated what the piece already
+        * shows — tall against short, bone against steel, round against square,
+        * a hole in the top or not — in the busiest line of the row. It was
+        * `aria-hidden` besides, so it never reached a screen reader; the live
+        * region names the piece in full and still does. What is left is the
+        * two things the drawing genuinely cannot say: whose piece it is, and
+        * that handing this one over loses the game. The line keeps its height
+        * either way, so the row does not move when it speaks.
+        */}
       <p className="tray__attrs" aria-hidden="true">
         {previewing && warn ? (
           <span className="tray__attrs-warn">Wins for your opponent</span>
         ) : away ? (
           <span className="tray__owner">{label}</span>
-        ) : (
-          attributes.map((attribute) => <span key={attribute}>{attribute}</span>)
-        )}
+        ) : null}
       </p>
     </section>
   )

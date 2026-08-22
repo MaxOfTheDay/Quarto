@@ -167,14 +167,3 @@ function withOutcome(state: GameState): GameState {
   if (state.board.every((cell) => cell !== null)) return { ...state, outcome: { kind: 'draw' } }
   return state
 }
-
-/** A one-line summary of a stored game, for the start screen. */
-export function describeSaved(game: SavedGame): string {
-  const state = game.history[game.history.length - 1]
-  const placed = state.board.filter((cell) => cell !== null).length
-  const who =
-    game.session.mode === 'computer'
-      ? `Vs computer · ${game.session.difficulty[0].toUpperCase()}${game.session.difficulty.slice(1)}`
-      : 'Two players'
-  return `${who} · ${placed} of 16 placed`
-}
