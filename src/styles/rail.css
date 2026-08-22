@@ -560,18 +560,14 @@
  * they are able to learn from it.
  */
 
-/* A baseline under every piece: short and tall are compared against the same
-   line, which is what keeps that attribute readable in a 42px slot. */
-.slot[data-state='available']::after {
-  content: '';
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  bottom: 15%;
-  height: 1px;
-  background: var(--slot-rule);
-  pointer-events: none;
-}
+/*
+ * No drawn baseline. It was meant to make short and tall comparable at 42px,
+ * but a generated box paints over its element's content rather than under it,
+ * so what it actually drew was a hairline stripe across the middle of every
+ * piece. The grid already does the job it was for: every slot is the same box
+ * and every glyph sits on its floor, so the sixteen pieces share a baseline
+ * without one being drawn.
+ */
 
 /* ── Result ──────────────────────────────────────────────────────────────── */
 
