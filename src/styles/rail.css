@@ -352,6 +352,31 @@
   letter-spacing: 0.1em;
 }
 
+/*
+ * A piece the opponent is holding: present, because it is in play and about to
+ * land on the board, but plainly not yours to act on. The same receding the
+ * board and the pool use for the half of the turn that is not theirs.
+ */
+/*
+ * Dimmed on the drawing itself, not on the box around it: the box carries the
+ * arrival animation, and an animation ending at full opacity outranks any
+ * ordinary declaration trying to hold it back.
+ */
+.tray[data-away='true'] .tray__piece .piece {
+  opacity: 0.5;
+  filter: none;
+}
+
+.tray__owner {
+  color: var(--ink-3);
+}
+
+/* On a wide screen the label above the shelf already names the owner, so the
+   description line simply stands empty rather than saying it twice. */
+.tray__owner {
+  visibility: hidden;
+}
+
 /* ── Pool ────────────────────────────────────────────────────────────────── */
 
 .rail-section {
@@ -680,6 +705,12 @@
 
   .tray__label {
     display: none;
+  }
+
+  /* No label above the shelf here, so this line is the only thing that says
+     the piece has been handed over rather than handed to you. */
+  .tray__owner {
+    visibility: visible;
   }
 
   .tray__shelf {

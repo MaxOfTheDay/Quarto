@@ -39,6 +39,15 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
   const shown = piece ?? preview
   const attributes = shown === null ? [] : describePiece(shown).split(' ')
   const previewing = piece === null && preview !== null
+  /*
+   * A piece on the shelf that is not yours to place. Handing one over and being
+   * handed one used to look the same — the same arc, the same shelf, the same
+   * four attributes spelled out — which made giving a piece away read as
+   * receiving one. The attributes are a study aid for the piece you are about
+   * to place; on a piece that has just left your hands they are noise, and the
+   * shelf says whose it is instead.
+   */
+  const away = piece !== null && !armed
 
   return (
     <section
@@ -47,6 +56,7 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
       data-empty={piece === null ? 'true' : undefined}
       data-preview={previewing ? 'true' : undefined}
       data-warn={previewing && warn ? 'true' : undefined}
+      data-away={away ? 'true' : undefined}
       aria-label={description}
     >
       <p className="state-label tray__label" data-accent={armed ? 'true' : undefined}>
@@ -76,6 +86,8 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
       <p className="tray__attrs" aria-hidden="true">
         {previewing && warn ? (
           <span className="tray__attrs-warn">Wins for your opponent</span>
+        ) : away ? (
+          <span className="tray__owner">{label}</span>
         ) : (
           attributes.map((attribute) => <span key={attribute}>{attribute}</span>)
         )}

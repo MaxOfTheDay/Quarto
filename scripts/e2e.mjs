@@ -641,6 +641,63 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await ctx.close()
 }
 
+// ── Giving a piece away must not look like being given one ──────────────────
+// Both used to be the same arc onto the same shelf with the same four
+// attributes spelled out, and the computer took its piece back off the shelf
+// about 90ms after it landed — so handing one over read as a flicker.
+{
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('radio', { name: 'Vs computer', exact: true }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(700)
+
+  /*
+   * Sampled across the whole exchange rather than at a guessed instant: the
+   * window this is about is half a second long and the assertions are about
+   * what was on screen during it, not about what happens to be there when a
+   * timeout fires.
+   */
+  await p.evaluate(() => {
+    window.__seen = { rest: 0, text: '', dim: 1, away: false }
+    window.__t0 = performance.now()
+    const tick = () => {
+      const tray = document.querySelector('.tray')
+      const piece = document.querySelector('.tray .tray__piece')
+      if (tray?.dataset.away === 'true' && piece && piece.dataset.hidden !== 'true') {
+        window.__seen.rest++
+        window.__seen.away = true
+        window.__seen.text = document.querySelector('.tray__attrs')?.textContent ?? ''
+        window.__seen.dim = +getComputedStyle(piece.querySelector('.piece') ?? piece).opacity
+      }
+      if (performance.now() - window.__t0 < 4000) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+  await p.locator('[data-piece="3"]').tap()
+  await p.waitForTimeout(4100)
+  const away = await p.evaluate(() => window.__seen)
+  check('a handed-over piece is marked as the opponent\'s', away.away, JSON.stringify(away))
+  check('it names the owner instead of listing attributes', /places/i.test(away.text), away.text)
+  check('it is drawn back from full strength', away.dim < 0.8, String(away.dim))
+  // ~500ms of rest at 60fps is about 30 frames; anything under 12 is a flash.
+  check('it rests long enough to be seen', away.rest >= 12, `${away.rest} frames`)
+
+  await p.waitForSelector('.tray[data-armed="true"]', { timeout: 15000 })
+  const mine = await p.evaluate(() => ({
+    away: document.querySelector('.tray')?.dataset.away,
+    text: document.querySelector('.tray__attrs')?.textContent ?? '',
+    dim: +getComputedStyle(document.querySelector('.tray .tray__piece .piece')).opacity,
+  }))
+  check('a piece handed to you is not marked as theirs', mine.away === undefined)
+  check('yours lists its attributes to study', /(short|tall)/i.test(mine.text), mine.text)
+  check('yours is at full strength', mine.dim === 1, String(mine.dim))
+  await ctx.close()
+}
+
 // ── Horizontal overflow at common widths ────────────────────────────────────
 for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 } })

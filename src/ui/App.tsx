@@ -29,8 +29,18 @@ import { RulesSheet } from './RulesSheet'
 import { SettingsSheet } from './SettingsSheet'
 import { Setup } from './Setup'
 
-/** How long the computer pauses before acting, so its moves stay readable. */
-const THINK_FLOOR = 420
+/** How long a piece takes to cross from the pool to the shelf. */
+const PASS_FLIGHT = 340
+
+/**
+ * How long the computer pauses before placing.
+ *
+ * It has to outlast the flight of the piece it was just handed, or the piece
+ * arrives on the shelf and is removed in the same breath — which is what made
+ * handing a piece over read as a flicker rather than as a move. The floor is
+ * the flight plus long enough to see what changed hands.
+ */
+const THINK_FLOOR = PASS_FLIGHT + 520
 const PASS_DELAY = 340
 /** How long a nudge on the live surface lasts after a click on the inert one. */
 const REFUSE_MS = 700
@@ -288,7 +298,7 @@ export function App() {
     let live = true
     const show = () => live && setTrayHidden(false)
     void flyClone(from, trayRef.current, {
-      duration: firstEver ? 620 : 340,
+      duration: firstEver ? 620 : PASS_FLIGHT,
       lift: firstEver ? 44 : 30,
     }).then(show, show)
     const failsafe = window.setTimeout(show, 1400)
