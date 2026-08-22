@@ -498,6 +498,8 @@ export function App() {
 
   const names = session?.names ?? ['Player 1', 'Player 2']
   const opponent = otherPlayer(state.turn)
+  /** Their very first game: the split turn is the one thing still to learn. */
+  const firstGame = prefs.gamesPlayed === 0
 
   /**
    * One line for the whole turn: who is acting, what they must do, and what
@@ -510,18 +512,26 @@ export function App() {
         ? { actor: names[state.outcome.player], action: 'wins', next: '' }
         : { actor: 'Draw', action: '', next: '' }
     }
+    /*
+     * Whose turn it is, and nothing else. What to do, and where, is said by the
+     * two section headings below — the one that is live wears the accent — so
+     * spelling it out here as well said the same thing twice within fifty
+     * pixels. The line that named the second half of the turn stays for a
+     * player's very first game, where the pattern is the whole thing to learn,
+     * and then the moving accent teaches it on its own.
+     */
+    const next = firstGame
+      ? phase === 'place'
+        ? `Then choose a piece for ${names[opponent]}.`
+        : `${names[opponent]} places it next.`
+      : ''
     if (isAiTurn) {
-      return {
-        actor: names[state.turn],
-        action: thinking ? 'is thinking' : 'is playing',
-        next: '',
-      }
+      return { actor: names[state.turn], action: thinking ? 'is thinking' : 'is playing', next: '' }
     }
-    const actor = session?.human === state.turn ? 'Your turn' : names[state.turn]
-    return phase === 'place'
-      ? { actor, action: 'to place this piece', next: `Then choose a piece for ${names[opponent]}.` }
-      : { actor, action: 'to choose a piece', next: `${names[opponent]} places it next.` }
-  }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, opponent, session])
+    return session?.human === state.turn
+      ? { actor: 'Your turn', action: '', next }
+      : { actor: `${names[state.turn]}’s turn`, action: '', next }
+  }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, opponent, session, firstGame])
 
   /** Shown in place of "what happens next" for the first few wrong-surface taps. */
   const nudge =
@@ -555,7 +565,7 @@ export function App() {
   const covered = showSetup ? ({ inert: '' } as const) : {}
 
   const trayLabel = choosing
-    ? `Choosing for ${names[opponent]}`
+    ? `For ${names[opponent]}`
     : session?.human === state.turn
       ? 'You place'
       : `${names[state.turn]} places`
@@ -656,7 +666,6 @@ export function App() {
                   label={trayLabel}
                   /* The label already says who is choosing; the shelf says what
                      it is for, which is the half of the turn people forget. */
-                  prompt={localTurn ? 'Their piece lands here' : 'Waiting for a piece'}
                   description={
                     choosing
                       ? `Empty. The piece chosen now goes to ${names[opponent]}.`
@@ -682,14 +691,14 @@ export function App() {
                   className="rail-section"
                   data-armed={localTurn && choosing ? 'true' : undefined}
                 >
-                  <div className="rail-section__head">
+                  <div className="section__head">
                     <p
                       className="state-label"
                       data-accent={localTurn && choosing ? 'true' : undefined}
                     >
-                      Remaining
+                      {localTurn && choosing ? 'Choose one' : 'Remaining'}
                     </p>
-                    <p className="state-label rail-section__count">{state.pool.length}</p>
+                    <p className="state-label section__count">{state.pool.length}</p>
                   </div>
                   <Pool
                     pool={state.pool}

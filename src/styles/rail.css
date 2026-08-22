@@ -204,73 +204,45 @@
   color: var(--ink-3);
 }
 
-/* ── Hand tray ───────────────────────────────────────────────────────────── */
+/* ── The hand ────────────────────────────────────────────────────────────── */
 
 /*
- * The piece in play, on its own shelf so it never reads as part of the pool.
- * The shelf keeps its height in both phases — and while its owner is choosing,
- * that reserved space shows the piece under the pointer rather than an empty
- * socket. It is the shelf the chosen piece flies to, so a preview standing on
- * it is a picture of exactly what is about to happen.
+ * One pocket of the same material the pool is made of, under the same heading.
+ * The piece in play came out of that pool and is going onto the board, and
+ * drawing it in the pool's own pocket is what makes the journey legible.
  */
 .tray {
-  /* One number drives the piece and the shelf it stands on, so a preview shows
-     exactly the footprint the real piece will fill. */
-  --tray-piece-w: 92px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    'label'
-    'shelf'
-    'attrs';
-  row-gap: 9px;
+  --tray-piece-w: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
-.tray__label {
-  grid-area: label;
-}
-
-/* No box: the piece rests on a ruled surface, and the rule is what lights up
-   when the piece is yours to place. */
 .tray__shelf {
-  grid-area: shelf;
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 94px;
-  border-bottom: 1px solid var(--hairline);
-  transition: border-color var(--dur-phase) var(--ease-out);
+  align-self: flex-start;
+  width: calc(var(--tray-piece-w) + 26px);
+  height: calc(var(--tray-piece-w) * 1.18);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--tray-face), var(--tray-face-lo));
+  box-shadow: var(--shadow-tray-rest);
+  transition:
+    box-shadow var(--dur-phase) var(--ease-out),
+    border-color var(--dur-phase) var(--ease-out),
+    filter var(--dur-phase) var(--ease-out);
+  filter: saturate(0.94) brightness(0.985);
 }
 
+/* Live, exactly as the pool's tray goes live when it is the surface in use. */
 .tray[data-armed='true'] .tray__shelf {
-  border-bottom-color: var(--accent);
-}
-
-/* Considering a piece that wins for the other side: the shelf says so before
-   the confirm does, in the one colour that never means "go ahead". */
-.tray[data-warn='true'] .tray__shelf {
-  border-bottom-color: var(--danger-bright);
-}
-
-/* A pool of warm light under the piece, only while it is waiting on you. */
-.tray__shelf::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  width: 132px;
-  height: 26px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--accent-lift), transparent);
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease-out);
-  pointer-events: none;
-}
-
-.tray[data-armed='true'] .tray__shelf::after {
-  opacity: 1;
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-tray);
+  filter: none;
 }
 
 .tray__piece {
@@ -279,21 +251,35 @@
   width: var(--tray-piece-w);
   /* The glyph's own 100 x 108 proportions. */
   height: calc(var(--tray-piece-w) * 1.08);
+  margin-bottom: 5px;
   animation: tray-arrive 280ms var(--ease-settle) both;
-  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
 .tray__piece .piece {
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 6px 8px rgba(60, 44, 26, 0.26));
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
 /* A piece being considered, not yet handed over: present enough to read every
    attribute, light enough that it is plainly not in play. */
 .tray__piece[data-ghost='true'] {
   animation: none;
+}
+
+.tray__piece[data-ghost='true'] .piece {
   opacity: 0.72;
+}
+
+/*
+ * Dimmed on the drawing itself, not on the box around it: the box carries the
+ * arrival animation, and an animation ending at full opacity outranks any
+ * ordinary declaration trying to hold it back.
+ */
+.tray[data-away='true'] .tray__piece .piece {
+  opacity: 0.5;
+  filter: none;
 }
 
 .tray__piece[data-hidden='true'] {
@@ -311,70 +297,15 @@
   }
 }
 
-/*
- * An empty shelf with nothing under the pointer says what to do rather than
- * drawing a socket for a piece that does not exist. It is one line, on the
- * shelf, aligned with everything else on it.
- */
-.tray__prompt {
-  align-self: center;
-  padding-bottom: var(--s-3);
-  font-size: var(--t-sm);
-  line-height: var(--lh-ui);
-  color: var(--ink-3);
-  text-align: center;
-  text-wrap: balance;
-}
-
-/* The four attributes in words — a piece never rests on tone alone. */
-.tray__attrs {
-  grid-area: attrs;
-  display: flex;
-  flex-wrap: nowrap;
-  font-size: var(--t-xs);
-  font-weight: 500;
-  letter-spacing: 0.13em;
-  line-height: var(--lh-ui);
-  text-transform: uppercase;
-  color: var(--ink-2);
-  min-height: 16px;
-}
-
-.tray__attrs span + span::before {
-  content: '·';
-  margin: 0 6px;
-  color: var(--ink-3);
-  opacity: 0.7;
-}
-
-.tray__attrs-warn {
-  color: var(--danger);
-  letter-spacing: 0.1em;
-}
-
-/*
- * A piece the opponent is holding: present, because it is in play and about to
- * land on the board, but plainly not yours to act on. The same receding the
- * board and the pool use for the half of the turn that is not theirs.
- */
-/*
- * Dimmed on the drawing itself, not on the box around it: the box carries the
- * arrival animation, and an animation ending at full opacity outranks any
- * ordinary declaration trying to hold it back.
- */
-.tray[data-away='true'] .tray__piece .piece {
-  opacity: 0.5;
-  filter: none;
-}
-
-.tray__owner {
-  color: var(--ink-3);
-}
-
-/* On a wide screen the label above the shelf already names the owner, so the
-   description line simply stands empty rather than saying it twice. */
-.tray__owner {
-  visibility: hidden;
+/* An empty pocket, drawn the way the pool draws a pocket whose piece has been
+   played — because that is the same thing said about a different place. */
+.tray__well {
+  width: 40%;
+  aspect-ratio: 1;
+  margin-bottom: 22%;
+  border-radius: 50%;
+  background: var(--slot-well);
+  box-shadow: var(--slot-well-shadow);
 }
 
 /* ── Pool ────────────────────────────────────────────────────────────────── */
@@ -386,8 +317,13 @@
   min-height: 0;
 }
 
-/* The same rule the tray uses: whichever surface is live wears the accent. */
-.rail-section__head {
+/*
+ * One heading, used by both halves of the turn. The hand and the pool are the
+ * two things a turn is made of, so they are built the same way — a heading that
+ * names the surface over the surface itself — and the one that is live wears
+ * the accent on its rule.
+ */
+.section__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -398,11 +334,23 @@
   flex-shrink: 0;
 }
 
-.rail-section[data-armed='true'] .rail-section__head {
+.rail-section[data-armed='true'] .section__head,
+.tray[data-armed='true'] .section__head {
   border-bottom-color: var(--accent);
 }
 
-.rail-section__count {
+/* Considering a piece that hands the game over: the one colour that never
+   means "go ahead". */
+.tray[data-warn='true'] .section__head {
+  border-bottom-color: var(--danger-bright);
+}
+
+.tray__warn {
+  color: var(--danger);
+  text-align: right;
+}
+
+.section__count {
   color: var(--ink-2);
 }
 
@@ -651,9 +599,6 @@
 @media (max-width: 900px) and (min-height: 561px), (max-width: 619px) {
   .stage {
     grid-template-columns: minmax(0, 1fr);
-    /* The board row absorbs whatever height is spare, which keeps the turn
-       state under the top bar and the pool within reach at the bottom rather
-       than floating both towards the middle. */
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'status'
@@ -677,106 +622,8 @@
     align-content: safe center;
   }
 
-  /*
-   * The hand is one short row here, not a shelf. The status line above it
-   * already says whose turn it is and whether to place or to choose, so the
-   * shelf's own label repeated it; and an empty shelf drew a dashed footprint
-   * that read as a broken image rather than as a waiting space. What is left is
-   * the piece and its four attributes when there is a piece, and quiet space
-   * the same height when there is not — which is what keeps the board from
-   * jumping between the two halves of the turn.
-   */
-  .tray {
-    --tray-piece-w: 52px;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: 'shelf attrs';
-    /* The piece stands on the row's floor and its description sits on the same
-       line, so the two read as one object with a label rather than as a glyph
-       floating above some text. */
-    align-items: end;
-    column-gap: var(--s-3);
-    row-gap: 0;
-    min-height: 58px;
-  }
-
-  .tray__label {
-    display: none;
-  }
-
-  /* No label above the shelf here, so this line is the only thing that says
-     the piece has been handed over rather than handed to you. */
-  .tray__owner {
-    visibility: visible;
-  }
-
-  .tray__shelf {
-    width: 56px;
-    height: 58px;
-    border-bottom: none;
-  }
-
-  .tray[data-armed='true'] .tray__shelf,
-  .tray[data-warn='true'] .tray__shelf {
-    border-bottom-color: transparent;
-  }
-
-  /* No dashed footprint: an empty row reads as space, a dashed box reads as a
-     rendering fault. */
-  .tray[data-empty='true'] .tray__shelf::before {
-    content: none;
-  }
-
-  .tray__shelf::after {
-    width: 56px;
-    height: 14px;
-    bottom: 2px;
-  }
-
-  /*
-   * Never wraps: a second line makes the row taller in one half of the turn
-   * than the other, which moves the board underneath it on every half-move.
-   * The type gives way instead, and the widest reading fits the narrowest
-   * phone the suite tests.
-   */
-  .tray__attrs {
-    align-self: end;
-    padding-bottom: 7px;
-    flex-wrap: nowrap;
-    font-size: 10.5px;
-    letter-spacing: 0.09em;
-    min-height: 0;
-  }
-
-  /* A flex item shrinks below its content by default, and the words then wrap
-     inside it — the row is wide enough for all four, so they are simply not
-     allowed to be squeezed. */
-  .tray__attrs span {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  .tray__attrs span + span::before {
-    margin: 0 5px;
-  }
-
-  /* No room for a sentence beside a 52px shelf, and the status line above has
-     already said it. */
-  .tray__prompt {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .stage__board {
-    align-items: center;
-  }
-
-  /* The tray leaves the rail and sits under the status, where it reads as part
-     of the turn rather than as part of the pool. */
+  /* The rail dissolves so the hand and the pool take rows of their own, in the
+     order the turn happens: hand, board, pool. */
   .stage__rail {
     display: contents;
   }
@@ -799,6 +646,20 @@
 
   .pool {
     grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .stage__board {
+    align-items: center;
+  }
+
+  /*
+   * Built exactly like the pool below it — heading, rule, surface — so the two
+   * halves of the turn are a matching pair with the board between them, in the
+   * order they happen.
+   */
+  .tray {
+    --tray-piece-w: 60px;
+    gap: 8px;
   }
 
   /* Height past this point buys nothing: the piece is limited by the column
@@ -845,7 +706,7 @@
   }
 
   .stage__board {
-    align-items: center;
+    align-items: flex-end;
   }
 
   .board__slab {
@@ -873,73 +734,29 @@
     min-height: 0;
   }
 
-  /* Upright again, because a column has height and no width to spare. */
+  /* Upright again, because a column has height and no width to spare: the
+     heading sits over the pocket here, as it does on a desktop. */
   .tray {
-    --tray-piece-w: 58px;
+    --tray-piece-w: 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'label'
-      'shelf'
-      'attrs';
-    row-gap: 5px;
-    border-bottom: none;
   }
 
-  .tray__label {
+  .tray .section__head {
+    padding-bottom: 5px;
+  }
+
+  .tray .state-label {
     font-size: 10px;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
   }
 
   .tray__shelf {
+    align-self: stretch;
     width: auto;
-    height: 66px;
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  .tray[data-armed='true'] .tray__shelf {
-    border-bottom-color: var(--accent);
-  }
-
-  .tray[data-warn='true'] .tray__shelf {
-    border-bottom-color: var(--danger-bright);
-  }
-
-  .tray__shelf::after {
-    width: 78px;
-    height: 16px;
-  }
-
-  /* A column of its own has the width for the shape but not for the sentence. */
-  .tray__prompt {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .tray[data-empty='true'] .tray__shelf::before {
-    content: '';
-    width: calc(var(--tray-piece-w) * 0.7);
-    height: calc(var(--tray-piece-w) * 0.72);
-    margin-bottom: 5px;
-    border: 1px dashed var(--hairline-strong);
-    border-radius: 3px;
-    opacity: 0.5;
-  }
-
-  .tray__attrs {
-    flex-wrap: wrap;
-    font-size: 9.5px;
-    letter-spacing: 0.06em;
-    min-height: 0;
-  }
-
-  .tray__attrs span + span::before {
-    margin: 0 3px;
+    height: calc(var(--tray-piece-w) * 1.24);
   }
 
   /* A definite row for the pool, so its two rows have a height to divide. */

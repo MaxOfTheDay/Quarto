@@ -292,27 +292,6 @@ for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
   check(`${width}x${height}: pool pieces stay legible`, pool.piece >= 38, `${pool.piece}px wide`)
   check(`${width}x${height}: pool slots stay tappable`, pool.slot >= 42, `${pool.slot}px wide`)
 
-  /*
-   * Counted as line boxes rather than inferred from the element's height: the
-   * row aligns the description to the piece's baseline with padding, which
-   * makes the box taller than its text without the text having wrapped.
-   */
-  const attrLines = await p.evaluate(() => {
-    const el = document.querySelector('.tray__attrs')
-    const range = document.createRange()
-    range.selectNodeContents(el)
-    const line = parseFloat(getComputedStyle(el).lineHeight) || 14
-    // A flex item's own box and the text inside it can differ by a fraction of
-    // a pixel, so tops are grouped by the line they belong to rather than
-    // counted exactly — two rects a pixel apart are one line, not two.
-    const tops = [...range.getClientRects()].filter((r) => r.height > 0).map((r) => r.top)
-    return tops.reduce((rows, top) => {
-      if (!rows.some((r) => Math.abs(r - top) < line / 2)) rows.push(top)
-      return rows
-    }, []).length
-  })
-  check(`${width}x${height}: the piece's attributes stay on one line`, attrLines <= 1, `${attrLines} lines`)
-  await ctx.close()
 }
 
 // ── Nothing may move underfoot between the two phases ───────────────────────
@@ -614,17 +593,18 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   check('a tap shows no preview on its way to the move', (await p.evaluate(() => window.__ghost)) === 0)
   check('the tap made the move', (await p.locator('.tray .tray__piece').count()) === 1)
 
-  // The hand is one short row on a phone, with no dashed placeholder standing
-  // in for the piece that is not there.
+  // The hand is a section built like the pool: a heading naming the surface
+  // over a pocket of the pool's own material.
   const tray = await p.evaluate(() => {
     const t = document.querySelector('.tray')
     return {
-      h: Math.round(t.getBoundingClientRect().height),
-      label: getComputedStyle(document.querySelector('.tray__label')).display,
+      head: Boolean(t.querySelector('.section__head .state-label')),
+      heading: t.querySelector('.section__head .state-label')?.textContent ?? '',
+      pocket: Boolean(t.querySelector('.tray__shelf')),
     }
   })
-  check('the phone hand row stays compact', tray.h <= 70, `${tray.h}px`)
-  check('the phone hand row drops the label the status already carries', tray.label === 'none')
+  check('the hand is a section with a heading, like the pool', tray.head && tray.pocket)
+  check('the heading names the surface', /place|for /i.test(tray.heading), tray.heading)
   await ctx.close()
 }
 
@@ -668,7 +648,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
       if (tray?.dataset.away === 'true' && piece && piece.dataset.hidden !== 'true') {
         window.__seen.rest++
         window.__seen.away = true
-        window.__seen.text = document.querySelector('.tray__attrs')?.textContent ?? ''
+        window.__seen.text = document.querySelector('.tray .section__head')?.textContent ?? ''
         window.__seen.dim = +getComputedStyle(piece.querySelector('.piece') ?? piece).opacity
       }
       if (performance.now() - window.__t0 < 4000) requestAnimationFrame(tick)
@@ -687,13 +667,11 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await p.waitForSelector('.tray[data-armed="true"]', { timeout: 15000 })
   const mine = await p.evaluate(() => ({
     away: document.querySelector('.tray')?.dataset.away,
-    text: document.querySelector('.tray__attrs')?.textContent ?? '',
+    text: document.querySelector('.tray .section__head')?.textContent ?? '',
     dim: +getComputedStyle(document.querySelector('.tray .tray__piece .piece')).opacity,
   }))
   check('a piece handed to you is not marked as theirs', mine.away === undefined)
-  // Your own piece needs no caption: the drawing says what it is, and the
-  // status line above says what to do with it.
-  check('yours says nothing the drawing already shows', mine.text.trim() === '', mine.text)
+  check('yours is headed as yours to place', /you place|player \d places/i.test(mine.text), mine.text)
   check('yours is at full strength', mine.dim === 1, String(mine.dim))
   await ctx.close()
 }
