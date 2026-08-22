@@ -173,7 +173,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 8.5%;
+  width: 7%;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--accent-warm);
@@ -192,7 +192,7 @@
  * animation outranks any ordinary declaration trying to switch it off.
  */
 .cell[data-target]:not([data-ghost='true']) .cell__target {
-  opacity: 0.6;
+  opacity: 0.42;
   transform: translate(-50%, -50%) scale(1);
   animation: target-in var(--dur) var(--ease-settle) backwards;
   animation-delay: calc(var(--target-index) * 22ms);

@@ -564,6 +564,12 @@ export function App() {
   // still let a keyboard reach the controls.
   const covered = showSetup ? ({ inert: '' } as const) : {}
 
+  const undoLabel = state.outcome
+    ? 'Take back'
+    : phase === 'place'
+      ? 'Undo choice'
+      : 'Undo placement'
+
   const trayLabel = choosing
     ? `For ${names[opponent]}`
     : session?.human === state.turn
@@ -638,8 +644,15 @@ export function App() {
               title={
                 canUndo ? (phase === 'place' ? 'Undo the last choice' : 'Undo the last placement') : undefined
               }
+              /* Both labels are in the DOM and one of them is hidden, so the
+                 accessible name is spelled out rather than left to whichever
+                 the viewport happens to show. */
+              aria-label={undoLabel}
             >
-              {state.outcome ? 'Take back' : phase === 'place' ? 'Undo choice' : 'Undo placement'}
+              <span className="undo__wide">{undoLabel}</span>
+              {/* Beside the pocket on a phone there is no room for a label that
+                  also changes width every half turn. */}
+              <span className="undo__narrow">Undo</span>
             </button>
           </div>
 

@@ -442,13 +442,16 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
     const bar = document.querySelector('.topbar').getBoundingClientRect()
     const status = document.querySelector('.stage__status').getBoundingClientRect()
     const board = document.querySelector('.board__slab').getBoundingClientRect()
+    // Upright, the pocket is the first thing in the band, so it — not the
+    // status text beside it — is what starts on the page's left edge.
+    const first = document.querySelector('.tray__shelf')?.getBoundingClientRect() ?? status
     return {
-      left: Math.round(status.left - bar.left),
+      left: Math.round(Math.min(status.left, first.left) - bar.left),
       right: Math.round(status.right - bar.right),
       boardLeft: Math.round(board.left - bar.left),
     }
   })
-  check(`${width}x${height}: status shares the bar's edges`, edges.left === 0 && edges.right === 0, JSON.stringify(edges))
+  check(`${width}x${height}: the turn band shares the bar's edges`, edges.left === 0 && edges.right === 0, JSON.stringify(edges))
   check(`${width}x${height}: the board starts on that edge`, edges.boardLeft === 0, `${edges.boardLeft}px off`)
   await ctx.close()
 }
@@ -593,18 +596,55 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   check('a tap shows no preview on its way to the move', (await p.evaluate(() => window.__ghost)) === 0)
   check('the tap made the move', (await p.locator('.tray .tray__piece').count()) === 1)
 
-  // The hand is a section built like the pool: a heading naming the surface
-  // over a pocket of the pool's own material.
-  const tray = await p.evaluate(() => {
-    const t = document.querySelector('.tray')
+  /*
+   * Upright, the pocket and the turn line are one band: the piece in play sits
+   * beside the sentence about it, under a single hairline. Stacked as two
+   * rows, each with its own heading and rule, they put two lines within
+   * seventy pixels of each other and said the same thing twice.
+   */
+  const band = await p.evaluate(() => {
+    const mid = (el) => { const b = el.getBoundingClientRect(); return b.top + b.height / 2 }
+    const shelf = document.querySelector('.tray__shelf')
+    const status = document.querySelector('.status')
+    const board = document.querySelector('.board__slab').getBoundingClientRect().top
+    // Every hairline drawn between the top bar and the board.
+    const rules = [...document.querySelectorAll('.app__shell *')].filter((el) => {
+      const b = el.getBoundingClientRect()
+      if (b.top <= 0 || b.bottom >= board || b.width < 40) return false
+      const cs = getComputedStyle(el)
+      // A rule, not a box: a bottom edge only, and one that is actually drawn.
+      return (
+        cs.borderBottomWidth !== '0px' &&
+        cs.borderBottomStyle !== 'none' &&
+        cs.borderTopWidth === '0px' &&
+        !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(cs.borderBottomColor)
+      )
+    }).map((el) => `${el.className}@${Math.round(el.getBoundingClientRect().bottom)}`)
     return {
-      head: Boolean(t.querySelector('.section__head .state-label')),
-      heading: t.querySelector('.section__head .state-label')?.textContent ?? '',
-      pocket: Boolean(t.querySelector('.tray__shelf')),
+      sameRow: Math.abs(mid(shelf) - mid(status)) < 12,
+      beside: shelf.getBoundingClientRect().right <= status.getBoundingClientRect().left,
+      headingHidden: getComputedStyle(
+        document.querySelector('.tray .section__head .state-label'),
+      ).display === 'none',
+      rules,
     }
   })
-  check('the hand is a section with a heading, like the pool', tray.head && tray.pocket)
-  check('the heading names the surface', /place|for /i.test(tray.heading), tray.heading)
+  check('the pocket and the turn line share one row', band.sameRow && band.beside, JSON.stringify(band))
+  check('the pocket carries no heading of its own upright', band.headingHidden)
+  check('one hairline above the board, not three', band.rules.length === 1, band.rules.join(', '))
+
+  // A spent pocket is a hole the whole slot deep. A disc inside it is
+  // piece-sized at this scale, and read as a piece that was still there.
+  await p.locator('[data-cell="0"]').tap()
+  await p.waitForTimeout(400)
+  const spent = await p.evaluate(() => {
+    const slot = document.querySelector('.slot[data-state="spent"]')
+    if (!slot) return null
+    const s = slot.getBoundingClientRect()
+    const w = slot.querySelector('.slot__well').getBoundingClientRect()
+    return { fills: w.width >= s.width - 1 && w.height >= s.height - 1, round: getComputedStyle(slot.querySelector('.slot__well')).borderRadius }
+  })
+  check('a spent pocket is a recess, not a disc', spent !== null && spent.fills, JSON.stringify(spent))
   await ctx.close()
 }
 
@@ -648,7 +688,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
       if (tray?.dataset.away === 'true' && piece && piece.dataset.hidden !== 'true') {
         window.__seen.rest++
         window.__seen.away = true
-        window.__seen.text = document.querySelector('.tray .section__head')?.textContent ?? ''
+        window.__seen.text = document.querySelector('.status')?.textContent ?? ''
         window.__seen.dim = +getComputedStyle(piece.querySelector('.piece') ?? piece).opacity
       }
       if (performance.now() - window.__t0 < 4000) requestAnimationFrame(tick)
@@ -659,7 +699,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await p.waitForTimeout(4100)
   const away = await p.evaluate(() => window.__seen)
   check('a handed-over piece is marked as the opponent\'s', away.away, JSON.stringify(away))
-  check('it names the owner rather than the piece', /places/i.test(away.text), away.text)
+  check('it names the owner rather than the piece', /computer/i.test(away.text), away.text)
   check('it is drawn back from full strength', away.dim < 0.8, String(away.dim))
   // ~500ms of rest at 60fps is about 30 frames; anything under 12 is a flash.
   check('it rests long enough to be seen', away.rest >= 12, `${away.rest} frames`)
@@ -667,11 +707,11 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await p.waitForSelector('.tray[data-armed="true"]', { timeout: 15000 })
   const mine = await p.evaluate(() => ({
     away: document.querySelector('.tray')?.dataset.away,
-    text: document.querySelector('.tray .section__head')?.textContent ?? '',
+    text: document.querySelector('.status')?.textContent ?? '',
     dim: +getComputedStyle(document.querySelector('.tray .tray__piece .piece')).opacity,
   }))
   check('a piece handed to you is not marked as theirs', mine.away === undefined)
-  check('yours is headed as yours to place', /you place|player \d places/i.test(mine.text), mine.text)
+  check('yours is named as your turn', /your turn/i.test(mine.text), mine.text)
   check('yours is at full strength', mine.dim === 1, String(mine.dim))
   await ctx.close()
 }

@@ -204,6 +204,10 @@
   color: var(--ink-3);
 }
 
+.undo__narrow {
+  display: none;
+}
+
 /* ── The hand ────────────────────────────────────────────────────────────── */
 
 /*
@@ -236,6 +240,12 @@
     border-color var(--dur-phase) var(--ease-out),
     filter var(--dur-phase) var(--ease-out);
   filter: saturate(0.94) brightness(0.985);
+}
+
+/* Empty, it is the same thing a spent pocket in the pool is — a hole waiting
+   for the piece chosen next — so it is drawn the same way. */
+.tray[data-empty='true'] .tray__shelf {
+  box-shadow: var(--slot-well-shadow);
 }
 
 /* Live, exactly as the pool's tray goes live when it is the surface in use. */
@@ -297,15 +307,10 @@
   }
 }
 
-/* An empty pocket, drawn the way the pool draws a pocket whose piece has been
-   played — because that is the same thing said about a different place. */
-.tray__well {
-  width: 40%;
-  aspect-ratio: 1;
-  margin-bottom: 22%;
-  border-radius: 50%;
-  background: var(--slot-well);
-  box-shadow: var(--slot-well-shadow);
+/* Holds the flight's landing point while the pocket is empty; draws nothing. */
+.tray__anchor {
+  width: 1px;
+  height: 1px;
 }
 
 /* ── Pool ────────────────────────────────────────────────────────────────── */
@@ -427,17 +432,13 @@
 /*
  * Unavailable-because-spent: an empty pocket in the tray. Which pieces are
  * gone is information a player plans with, so it reads as clearly empty rather
- * than as a faint hint of one.
+ * than as a faint hint of one — but as a hole the whole slot deep, not as a
+ * disc sitting inside it. A disc at this size is piece-sized, and against the
+ * dark theme's tray a dark disc read as a piece that was still there.
  */
 .slot__well {
   position: absolute;
-  left: 50%;
-  bottom: 24%;
-  width: 30%;
-  aspect-ratio: 1;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: var(--slot-well);
+  inset: 0;
   box-shadow: var(--slot-well-shadow);
   opacity: 0;
   transition: opacity var(--dur) var(--ease-out);
@@ -597,33 +598,49 @@
 /* Stack only when there is height to stack into. A phone held sideways falls
    through to the three-column layout below instead. */
 @media (max-width: 900px) and (min-height: 561px), (max-width: 619px) {
+  /*
+   * One band across the top instead of two rows. The pocket holding the piece
+   * in play sat under a heading and a rule of its own, directly beneath the
+   * status line and its rule — two hairlines within seventy pixels, and two
+   * labels ("You place" over the pocket, "Your turn" above it) that differ
+   * only in wording. Side by side they are one statement: this piece, this
+   * player. Which half of the turn it is stays the accent's job, on the pocket
+   * while you place and on the pool's heading while you choose.
+   */
   .stage {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'status'
-      'tray'
-      'board'
-      'pool';
+      'tray  status'
+      'board board'
+      'pool  pool';
     /*
      * A phone's board is as wide as the screen lets it be, so on a tall screen
      * there is height left over that cannot become more board. It all goes to
      * the board's own row, where the board centres in it: one calm margin
      * around the game rather than three identical holes between its parts.
-     * The status stays under the top bar and the pool stays on the bottom edge,
+     * The band stays under the top bar and the pool stays on the bottom edge,
      * within reach of a thumb.
      */
     align-content: stretch;
-    gap: var(--s-3);
+    gap: var(--s-3) var(--s-4);
   }
 
+  /* No piece is in play once the game is over, so the band's first column has
+     nothing to hold and the panel takes the full width. */
   .stage[data-over='true'] {
-    grid-template-rows: auto auto auto auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      'status'
+      'board'
+      'pool';
     align-content: safe center;
   }
 
-  /* The rail dissolves so the hand and the pool take rows of their own, in the
-     order the turn happens: hand, board, pool. */
+  /* The rail dissolves so the hand can join the band at the top and the pool
+     take a row of its own, in the order the turn happens: the piece you were
+     handed, the board, the pieces left to hand over. */
   .stage__rail {
     display: contents;
   }
@@ -636,8 +653,24 @@
     grid-area: pool;
   }
 
+  /*
+   * Centred against the pocket beside it, and with no rule of its own: the
+   * board below is a drawn slab with edges of its own and does not need a line
+   * introducing it, which leaves one hairline in the upper half of the screen
+   * rather than three.
+   */
   .stage__status {
-    padding-bottom: 10px;
+    align-items: center;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .undo__wide {
+    display: none;
+  }
+
+  .undo__narrow {
+    display: inline;
   }
 
   .status__line {
@@ -653,13 +686,32 @@
   }
 
   /*
-   * Built exactly like the pool below it — heading, rule, surface — so the two
-   * halves of the turn are a matching pair with the board between them, in the
-   * order they happen.
+   * Just the pocket. The status line beside it already names the player whose
+   * piece it is, so the heading over it repeated that in different words; what
+   * the pool needs a header row for — a count, and a wide grid of similar
+   * tiles to introduce — the hand does not, being one object.
+   *
+   * What makes the two sections a pair is the pocket's material, the accent
+   * they take in turn, and their place at the two ends of the turn — not
+   * identical geometry.
    */
   .tray {
-    --tray-piece-w: 60px;
-    gap: 8px;
+    --tray-piece-w: 56px;
+    gap: 0;
+  }
+
+  /* Kept for the one thing it still carries — the warning on a previewed
+     piece — which only a pointing device can raise, and which then sits under
+     the pocket rather than over it. */
+  .tray .section__head {
+    order: 2;
+    padding-top: var(--s-1);
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .tray .section__head .state-label:not(.tray__warn) {
+    display: none;
   }
 
   /* Height past this point buys nothing: the piece is limited by the column

@@ -19,15 +19,19 @@ export interface HandTrayProps {
 }
 
 /**
- * The piece in play, in a section built exactly like the pool below it: a
- * heading that names what the surface is for and takes the accent when it is
- * yours to act on, over a pocket of the same material the pool's pieces sit in.
+ * The piece in play, in a pocket of the same material the pool's pieces sit in,
+ * which takes the accent when it is yours to act on.
  *
- * The two sections are the two halves of a Quarto turn — place the piece you
- * were handed, then choose one from what is left — so they are drawn as a
+ * The hand and the pool are the two halves of a Quarto turn — place the piece
+ * you were handed, then choose one from what is left — so they are drawn as a
  * matching pair with the board between them, in the order they happen. An empty
  * pocket here reads the way a spent pocket reads in the pool, which is also
  * exactly what it is: the place the piece chosen next will land.
+ *
+ * The heading over the pocket is the pool's own heading treatment, and it earns
+ * its place where the layout gives the pocket a column of its own. Upright,
+ * where the pocket sits beside the line naming whose turn it is, CSS hides it:
+ * the sentence next to it already says what it would have said.
  */
 export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function HandTray(
   { piece, preview, label, description, hidden, armed, warn },
@@ -75,7 +79,13 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
             <PieceGlyph piece={shown} className="piece" />
           </span>
         ) : (
-          <span ref={ref} className="tray__well" aria-hidden="true" />
+          /*
+           * Nothing drawn at all. A mark for the empty pocket read as a dark
+           * round piece sitting in it rather than as an absence — at this size
+           * a circle is piece-sized, whatever it is meant to signify. An empty
+           * pocket is the clearest thing an empty pocket can look like.
+           */
+          <span ref={ref} className="tray__anchor" aria-hidden="true" />
         )}
       </div>
     </section>
