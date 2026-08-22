@@ -633,25 +633,115 @@
     /* The board row absorbs whatever height is spare, which keeps the turn
        state under the top bar and the pool within reach at the bottom rather
        than floating both towards the middle. */
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'status'
       'tray'
       'board'
       'pool';
     /*
-     * A phone's board is as wide as the screen lets it be, so spare height
-     * cannot become more board. Spreading it between the rows turns what used
-     * to be one 70-130px hole above the board into breathing room, and keeps
-     * the pool on the bottom edge where a thumb reaches it.
+     * A phone's board is as wide as the screen lets it be, so on a tall screen
+     * there is height left over that cannot become more board. It all goes to
+     * the board's own row, where the board centres in it: one calm margin
+     * around the game rather than three identical holes between its parts.
+     * The status stays under the top bar and the pool stays on the bottom edge,
+     * within reach of a thumb.
      */
-    align-content: space-between;
+    align-content: stretch;
     gap: var(--s-3);
   }
 
   .stage[data-over='true'] {
     grid-template-rows: auto auto auto auto;
     align-content: safe center;
+  }
+
+  /*
+   * The hand is one short row here, not a shelf. The status line above it
+   * already says whose turn it is and whether to place or to choose, so the
+   * shelf's own label repeated it; and an empty shelf drew a dashed footprint
+   * that read as a broken image rather than as a waiting space. What is left is
+   * the piece and its four attributes when there is a piece, and quiet space
+   * the same height when there is not — which is what keeps the board from
+   * jumping between the two halves of the turn.
+   */
+  .tray {
+    --tray-piece-w: 52px;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'shelf attrs';
+    /* The piece stands on the row's floor and its description sits on the same
+       line, so the two read as one object with a label rather than as a glyph
+       floating above some text. */
+    align-items: end;
+    column-gap: var(--s-3);
+    row-gap: 0;
+    min-height: 58px;
+  }
+
+  .tray__label {
+    display: none;
+  }
+
+  .tray__shelf {
+    width: 56px;
+    height: 58px;
+    border-bottom: none;
+  }
+
+  .tray[data-armed='true'] .tray__shelf,
+  .tray[data-warn='true'] .tray__shelf {
+    border-bottom-color: transparent;
+  }
+
+  /* No dashed footprint: an empty row reads as space, a dashed box reads as a
+     rendering fault. */
+  .tray[data-empty='true'] .tray__shelf::before {
+    content: none;
+  }
+
+  .tray__shelf::after {
+    width: 56px;
+    height: 14px;
+    bottom: 2px;
+  }
+
+  /*
+   * Never wraps: a second line makes the row taller in one half of the turn
+   * than the other, which moves the board underneath it on every half-move.
+   * The type gives way instead, and the widest reading fits the narrowest
+   * phone the suite tests.
+   */
+  .tray__attrs {
+    align-self: end;
+    padding-bottom: 7px;
+    flex-wrap: nowrap;
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    min-height: 0;
+  }
+
+  /* A flex item shrinks below its content by default, and the words then wrap
+     inside it — the row is wide enough for all four, so they are simply not
+     allowed to be squeezed. */
+  .tray__attrs span {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .tray__attrs span + span::before {
+    margin: 0 5px;
+  }
+
+  /* No room for a sentence beside a 52px shelf, and the status line above has
+     already said it. */
+  .tray__prompt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .stage__board {
@@ -696,90 +786,6 @@
 
   .result {
     animation-delay: 280ms;
-  }
-}
-
-/*
- * The shelf sits beside its label rather than above it: the same information in
- * half the height, which is what lets both phases fit on one screen. The rule
- * runs under the whole block, so the piece and its description stand on one
- * shelf. Shared by the stacked and the sideways layouts, which used to carry
- * forty identical lines each.
- */
-@media (max-width: 900px) and (min-height: 561px),
-  (max-width: 619px),
-  (max-height: 560px) and (min-width: 620px) {
-  .tray {
-    /* The glyph is 1.08 times as tall as it is wide; the shelf has to clear it
-       or the piece stands through its own rule. */
-    --tray-piece-w: 58px;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      'shelf label'
-      'shelf attrs';
-    align-items: end;
-    column-gap: var(--s-4);
-    row-gap: 3px;
-    border-bottom: 1px solid var(--hairline);
-    transition: border-color var(--dur-phase) var(--ease-out);
-  }
-
-  .tray[data-armed='true'] {
-    border-bottom-color: var(--accent);
-  }
-
-  .tray[data-warn='true'] {
-    border-bottom-color: var(--danger-bright);
-  }
-
-  .tray__label {
-    align-self: end;
-  }
-
-  .tray__shelf {
-    width: 82px;
-    height: 66px;
-    border-bottom: none;
-  }
-
-  .tray__shelf::after {
-    width: 78px;
-    height: 18px;
-  }
-
-  /*
-   * There is no room for a sentence on an 82px shelf, and the label beside it
-   * already says who is choosing. What is missing is the shape: a dashed
-   * footprint standing where the piece will stand says "a piece goes here"
-   * without words, and without the stray floating ellipse this replaced.
-   */
-  .tray__prompt {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .tray[data-empty='true'] .tray__shelf::before {
-    content: '';
-    width: calc(var(--tray-piece-w) * 0.7);
-    height: calc(var(--tray-piece-w) * 0.72);
-    margin-bottom: 5px;
-    border: 1px dashed var(--hairline-strong);
-    border-radius: 3px;
-    opacity: 0.5;
-  }
-
-  .tray__attrs {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-  }
-
-  .tray__attrs span + span::before {
-    margin: 0 5px;
   }
 }
 

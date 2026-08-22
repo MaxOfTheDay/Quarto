@@ -97,13 +97,20 @@ export function Pool({ pool, selecting, hot, onSelect, onPreview, onRefuse, slot
              */
             aria-disabled={enabled ? undefined : 'true'}
             tabIndex={selecting && piece === cursor ? 0 : -1}
-            onFocus={() => {
+            /*
+             * The shelf preview is a hover affordance, and a touch screen has
+             * no hover: a tap fires pointerenter and focus on its way to the
+             * click, so the piece flashed onto the shelf for a frame and then
+             * flew there anyway. Only a real mouse, or keyboard focus, asks for
+             * a preview — a finger goes straight to the move.
+             */
+            onFocus={(e) => {
               setCursor(piece)
-              if (enabled) onPreview(piece)
+              if (enabled && e.currentTarget.matches(':focus-visible')) onPreview(piece)
             }}
             onBlur={() => onPreview(null)}
             onKeyDown={(e) => onKeyDown(e, piece)}
-            onPointerEnter={() => enabled && onPreview(piece)}
+            onPointerEnter={(e) => enabled && e.pointerType === 'mouse' && onPreview(piece)}
             onClick={() => (enabled ? onSelect(piece) : onRefuse?.())}
             aria-label={
               available

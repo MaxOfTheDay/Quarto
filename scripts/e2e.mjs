@@ -292,11 +292,26 @@ for (const [width, height] of [[360, 800], [390, 844], [412, 915]]) {
   check(`${width}x${height}: pool pieces stay legible`, pool.piece >= 38, `${pool.piece}px wide`)
   check(`${width}x${height}: pool slots stay tappable`, pool.slot >= 42, `${pool.slot}px wide`)
 
-  const attrs = await p.evaluate(() => {
+  /*
+   * Counted as line boxes rather than inferred from the element's height: the
+   * row aligns the description to the piece's baseline with padding, which
+   * makes the box taller than its text without the text having wrapped.
+   */
+  const attrLines = await p.evaluate(() => {
     const el = document.querySelector('.tray__attrs')
-    return { height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) || 16 }
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    const line = parseFloat(getComputedStyle(el).lineHeight) || 14
+    // A flex item's own box and the text inside it can differ by a fraction of
+    // a pixel, so tops are grouped by the line they belong to rather than
+    // counted exactly — two rects a pixel apart are one line, not two.
+    const tops = [...range.getClientRects()].filter((r) => r.height > 0).map((r) => r.top)
+    return tops.reduce((rows, top) => {
+      if (!rows.some((r) => Math.abs(r - top) < line / 2)) rows.push(top)
+      return rows
+    }, []).length
   })
-  check(`${width}x${height}: the piece's attributes stay on one line`, attrs.height <= attrs.line + 2)
+  check(`${width}x${height}: the piece's attributes stay on one line`, attrLines <= 1, `${attrLines} lines`)
   await ctx.close()
 }
 
@@ -569,6 +584,60 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   check('a shortcut skips the start screen', (await p.locator('.setup__title').count()) === 0)
   check('a shortcut picks its mode', (await p.locator('.topbar__mode').textContent()).includes('Vs computer'))
   check('a shortcut cleans the URL behind it', !p.url().includes('new='), p.url())
+  await ctx.close()
+}
+
+// ── A finger goes straight to the move ──────────────────────────────────────
+// The shelf preview is a hover affordance and a touch screen has no hover: a
+// tap fires pointerenter and focus on its way to the click, so the piece used
+// to flash onto the shelf for a frame and then fly there anyway.
+{
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true })
+  const p = await ctx.newPage()
+  await p.goto(URL, { waitUntil: 'domcontentloaded' })
+  await p.waitForSelector('.setup__title')
+  await p.getByRole('radio', { name: 'Two players', exact: true }).click()
+  await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
+  await p.waitForSelector('.board__slab')
+  await p.waitForTimeout(600)
+
+  await p.evaluate(() => {
+    window.__ghost = 0
+    window.__n = 0
+    const tick = () => {
+      const el = document.querySelector('.tray .tray__piece')
+      if (el?.dataset.ghost === 'true') window.__ghost++
+      if (++window.__n < 70) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+  await p.locator('[data-piece="9"]').tap()
+  await p.waitForTimeout(1200)
+  check('a tap shows no preview on its way to the move', (await p.evaluate(() => window.__ghost)) === 0)
+  check('the tap made the move', (await p.locator('.tray .tray__piece').count()) === 1)
+
+  // The hand is one short row on a phone, with no dashed placeholder standing
+  // in for the piece that is not there.
+  const tray = await p.evaluate(() => {
+    const t = document.querySelector('.tray')
+    return {
+      h: Math.round(t.getBoundingClientRect().height),
+      label: getComputedStyle(document.querySelector('.tray__label')).display,
+    }
+  })
+  check('the phone hand row stays compact', tray.h <= 70, `${tray.h}px`)
+  check('the phone hand row drops the label the status already carries', tray.label === 'none')
+  await ctx.close()
+}
+
+// A mouse still gets the preview it is for.
+{
+  const { p, ctx } = await open()
+  await begin(p)
+  await p.locator('[data-piece="6"]').hover()
+  await p.waitForTimeout(400)
+  const shelf = await p.evaluate(() => document.querySelector('.tray .tray__piece')?.dataset.ghost)
+  check('a mouse hover still previews on the shelf', shelf === 'true', String(shelf))
   await ctx.close()
 }
 
