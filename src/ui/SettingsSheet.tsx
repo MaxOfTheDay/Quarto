@@ -79,9 +79,9 @@ export function SettingsSheet({ prefs, onChange, onClose }: SettingsSheetProps) 
         <div className="toggles">
           <Toggle
             label="Show what is at stake"
-            hint="Marks where you can win, and which pieces win for your opponent"
+            hint="Marks where you can win, and checks before you hand over a piece that loses"
             on={prefs.coach}
-            onToggle={() => onChange({ coach: !prefs.coach, coachSet: true })}
+            onToggle={() => onChange({ coach: !prefs.coach })}
           />
           <Toggle
             label="Sound"
@@ -97,7 +97,7 @@ export function SettingsSheet({ prefs, onChange, onClose }: SettingsSheetProps) 
           />
         </div>
         <p className="rule__aside">
-          Marks are never shown against Hard.
+          None of this appears against Hard, where it would be playing the game.
         </p>
       </section>
     </Modal>

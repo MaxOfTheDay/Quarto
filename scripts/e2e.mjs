@@ -716,6 +716,78 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await ctx.close()
 }
 
+/*
+ * Coaching, for a player who is not on their first game.
+ *
+ * It used to retire itself after three finished games, while the Settings
+ * switch went on reading "On" — so the check before handing over the piece
+ * that finishes a line silently stopped happening and there was nothing in the
+ * interface to say why. What the switch says is now what happens.
+ */
+{
+  const play = async (prefs) => {
+    const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true })
+    const p = await ctx.newPage()
+    await p.addInitScript((stored) => {
+      localStorage.setItem('quarto.prefs.v2', JSON.stringify(stored))
+    }, { mode: 'computer', difficulty: 'medium', opener: 'p1', sound: false, reducedEffects: false,
+         seenIntro: true, theme: 'dark', coach: true, gamesPlayed: 12, ...prefs })
+    await p.goto(URL, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.setup__title')
+    await p.getByRole('radio', { name: 'Vs computer', exact: true }).click()
+    if (prefs.difficulty) await p.getByRole('radio', { name: 'Hard', exact: true }).click()
+    await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
+    await p.waitForSelector('.board__slab')
+
+    let marked = false
+    let confirmed = false
+    for (let i = 0; i < 300; i++) {
+      const s = await p.evaluate(() => {
+        const live = [...document.querySelectorAll('.pool[data-active="true"] .slot[data-state="available"]')]
+        return {
+          over: !!document.querySelector('.status[data-outcome="true"]'),
+          cells: [...document.querySelectorAll('.cell[data-target="true"]')].map((e) => e.dataset.cell),
+          slots: live.map((e) => e.dataset.piece),
+          hot: live.filter((e) => /wins for your opponent/i.test(e.getAttribute('aria-label') ?? ''))
+            .map((e) => e.dataset.piece),
+        }
+      })
+      if (s.over) break
+      if (s.hot.length) {
+        marked = true
+        await p.locator(`[data-piece="${s.hot[0]}"]`).click({ timeout: 2000 }).catch(() => {})
+        await p.waitForTimeout(400)
+        confirmed = await p.evaluate(() => !!document.querySelector('[role=dialog]'))
+        break
+      }
+      const cell = s.cells.length ? s.cells[Math.floor(Math.random() * s.cells.length)] : null
+      const slot = s.slots.length ? s.slots[Math.floor(Math.random() * s.slots.length)] : null
+      if (!cell && !slot) {
+        await p.waitForTimeout(120)
+        continue
+      }
+      try {
+        await p.locator(cell ? `[data-cell="${cell}"]` : `[data-piece="${slot}"]`).click({ timeout: 2000 })
+      } catch {
+        // The turn flipped between reading and clicking; look again.
+      }
+      await p.waitForTimeout(110)
+    }
+    await ctx.close()
+    return { marked, confirmed }
+  }
+
+  const veteran = await play({})
+  check('a losing piece is still marked after a dozen games', veteran.marked)
+  check('handing one over still asks first', veteran.confirmed)
+
+  const off = await play({ coach: false })
+  check('turning coaching off stops the marks', !off.marked)
+
+  const hard = await play({ difficulty: 'hard' })
+  check('Hard is never coached', !hard.marked)
+}
+
 // ── Horizontal overflow at common widths ────────────────────────────────────
 for (const width of [320, 360, 390, 414, 768, 1024, 1440]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 } })
