@@ -30,12 +30,18 @@
     box-shadow var(--dur-phase) var(--ease-out),
     filter var(--dur-phase) var(--ease-out);
   /*
-   * Receded, not disabled: enough to lose the argument with the pool, not
-   * enough to stop the position being read. It is expressed in light alone —
-   * a board that also moved, however slightly, would shift the target a player
-   * is aiming at between the two halves of every turn.
+   * Set down. Receded, not disabled: enough to lose the argument with the pool,
+   * not enough to stop the position being read — which is exactly what a player
+   * is doing with it while they choose. It is expressed in light alone: a board
+   * that also moved, however slightly, would shift the target a player is
+   * aiming at between the two halves of every turn.
+   *
+   * It was four per cent, against a shadow that only shrank. Four per cent on a
+   * dark board with its throw still under it is a board that does not visibly
+   * change at all, which left the whole phase swap resting on the colour of a
+   * twelve-point label at the bottom of the screen.
    */
-  filter: saturate(0.9) brightness(0.96);
+  filter: saturate(0.84) brightness(0.89);
 }
 
 .board__slab[data-live='true'] {
@@ -155,16 +161,23 @@
   transition: box-shadow var(--dur) var(--ease-out);
 }
 
-/* The one accent on the page: an empty pocket that will take your piece. They
-   arrive across the board rather than all together, which is what makes the
-   change of phase something you see rather than something you are told. */
+/*
+ * An empty pocket that will take your piece. They arrive across the board
+ * rather than all together, which is what makes the change of phase something
+ * you see rather than something you are told.
+ *
+ * Sixteen of these are a texture, not sixteen invitations — which is the right
+ * thing for them to be, since the invitation is the board itself coming
+ * forward. But at five pixels and forty per cent they were a texture nobody
+ * could see either: grain in the wood rather than a mark on it.
+ */
 @keyframes target-in {
   from {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.2);
   }
   to {
-    opacity: 0.6;
+    opacity: 0.5;
     transform: translate(-50%, -50%) scale(1);
   }
 }
@@ -173,7 +186,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 7%;
+  width: 9%;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--accent-warm);
@@ -192,7 +205,7 @@
  * animation outranks any ordinary declaration trying to switch it off.
  */
 .cell[data-target]:not([data-ghost='true']) .cell__target {
-  opacity: 0.42;
+  opacity: 0.5;
   transform: translate(-50%, -50%) scale(1);
   animation: target-in var(--dur) var(--ease-settle) backwards;
   animation-delay: calc(var(--target-index) * 22ms);

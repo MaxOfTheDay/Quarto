@@ -7,8 +7,6 @@ export interface HandTrayProps {
   piece: PieceId | null
   /** The pool piece under the pointer or keyboard cursor, while choosing. */
   preview: PieceId | null
-  /** Whose piece it is, or who the next one is for. */
-  label: string
   /** Read out to assistive tech in place of the visual shelf. */
   description: string
   hidden: boolean
@@ -24,17 +22,24 @@ export interface HandTrayProps {
  *
  * The hand and the pool are the two halves of a Quarto turn — place the piece
  * you were handed, then choose one from what is left — so they are drawn as a
- * matching pair with the board between them, in the order they happen. An empty
- * pocket here reads the way a spent pocket reads in the pool, which is also
- * exactly what it is: the place the piece chosen next will land.
+ * matching pair with the board between them, in the order they happen.
  *
- * The heading over the pocket is the pool's own heading treatment, and it earns
- * its place where the layout gives the pocket a column of its own. Upright,
- * where the pocket sits beside the line naming whose turn it is, CSS hides it:
- * the sentence next to it already says what it would have said.
+ * There is no such thing as an empty pocket here. Drawn empty it was a dark
+ * bordered hole in the first place on the screen the eye reaches, on screen for
+ * half of every game and saying nothing — the opening frame of a new game was a
+ * hole, an empty board and a heading. So the pocket exists exactly when a piece
+ * does: it folds away when the piece it was holding goes onto the board, and it
+ * is simply there again, at once, when the next one arrives. Its presence is
+ * the statement, and the sentence at the top of the screen is the other half of
+ * it.
+ *
+ * Opening is deliberately not animated. The pocket is where a flying piece
+ * lands, and a landing point that is still moving is a landing point the flight
+ * measures wrong — so the width transition is declared on the folded state,
+ * where it applies on the way in and not on the way out.
  */
 export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function HandTray(
-  { piece, preview, label, description, hidden, armed, warn },
+  { piece, preview, description, hidden, armed, warn },
   ref,
 ) {
   const shown = piece ?? preview
@@ -50,21 +55,12 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
     <section
       className="tray"
       data-armed={armed ? 'true' : undefined}
-      data-empty={piece === null ? 'true' : undefined}
+      data-collapsed={shown === null ? 'true' : undefined}
       data-preview={previewing ? 'true' : undefined}
       data-warn={previewing && warn ? 'true' : undefined}
       data-away={away ? 'true' : undefined}
       aria-label={description}
     >
-      <div className="section__head">
-        <p className="state-label" data-accent={armed ? 'true' : undefined}>
-          {label}
-        </p>
-        {/* The one thing the drawing cannot say, in the place the count sits
-            on the pool's own heading. */}
-        {previewing && warn && <p className="state-label tray__warn">Wins for your opponent</p>}
-      </div>
-
       <div className="tray__shelf">
         {shown !== null ? (
           <span
@@ -79,12 +75,8 @@ export const HandTray = forwardRef<HTMLSpanElement, HandTrayProps>(function Hand
             <PieceGlyph piece={shown} className="piece" />
           </span>
         ) : (
-          /*
-           * Nothing drawn at all. A mark for the empty pocket read as a dark
-           * round piece sitting in it rather than as an absence — at this size
-           * a circle is piece-sized, whatever it is meant to signify. An empty
-           * pocket is the clearest thing an empty pocket can look like.
-           */
+          /* Holds the flight's landing point while the pocket is folded away;
+             draws nothing. */
           <span ref={ref} className="tray__anchor" aria-hidden="true" />
         )}
       </div>

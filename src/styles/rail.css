@@ -72,16 +72,15 @@
   grid-area: status;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--s-4);
+  min-width: 0;
   padding-bottom: var(--s-3);
   border-bottom: 1px solid var(--hairline);
 }
 
 /*
- * Whose turn, what they must do, and what happens straight after — the three
- * things Quarto's split turn keeps making people ask. The second line is
- * always present so the row never changes height between the two phases.
+ * Whose turn it is, and what they are to do about it. Two lines, both always
+ * present, so the row never changes height and the answer to "what now" is
+ * always in the same place on the screen.
  */
 .status {
   display: grid;
@@ -108,32 +107,32 @@
   color: var(--ink-3);
 }
 
+/*
+ * What to do now. The only accent text in the game, and the words half of the
+ * same signal the live surface carries in light — so it is the accent for the
+ * same reason the surface is, and it is empty for the half of the game when
+ * nothing is being asked of you.
+ */
 .status__next {
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
-  color: var(--ink-3);
+  color: var(--accent);
   min-height: 18px;
   transition: color var(--dur-fast) var(--ease-out);
 }
 
-/* Answering a tap on the wrong surface: the same line, saying which way round
-   the turn is. It goes back to itself a moment later. */
+/* Answering a tap on the wrong surface: the same sentence, put more firmly,
+   while the surface that is live flashes. It goes back to itself a moment
+   later. */
 .status__next[data-nudge='true'] {
-  color: var(--accent);
   font-weight: 500;
 }
 
-/* A filled dot before the actor: it is your move. Nothing else in the game
-   uses this mark, so it can only ever mean that. */
-.status[data-live='true'] .status__actor::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  margin-right: 9px;
-  vertical-align: 2px;
+/* Pointing at a piece that finishes a line for the other side. The one colour
+   in the game that never means "go ahead". */
+.status__next[data-warn='true'] {
+  color: var(--danger);
+  font-weight: 500;
 }
 
 /* The result is announced here rather than a second time down in the rail. */
@@ -196,9 +195,7 @@
   animation-delay: 0.18s;
 }
 
-/* The box sits on the frame's right edge, as the top bar's last button does;
-   pulling the label out to the edge instead put the control — and its focus
-   ring — outside the stage, which clips. */
+/* In the top bar with the rest of the app's controls. */
 .undo {
   flex-shrink: 0;
   color: var(--ink-3);
@@ -211,16 +208,26 @@
 /* ── The hand ────────────────────────────────────────────────────────────── */
 
 /*
- * One pocket of the same material the pool is made of, under the same heading.
- * The piece in play came out of that pool and is going onto the board, and
- * drawing it in the pool's own pocket is what makes the journey legible.
+ * One pocket of the same material the pool is made of. The piece in play came
+ * out of that pool and is going onto the board, and drawing it in the pool's
+ * own cloth is what makes the journey legible.
+ *
+ * The cloth is set down by default and takes its light back when the piece on
+ * it is yours to move.
  */
 .tray {
   --tray-piece-w: 84px;
+  --face: var(--tray-face-rest);
+  --face-lo: var(--tray-face-lo-rest);
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+}
+
+.tray[data-armed='true'] {
+  --face: var(--tray-face);
+  --face-lo: var(--tray-face-lo);
 }
 
 .tray__shelf {
@@ -233,26 +240,51 @@
   height: calc(var(--tray-piece-w) * 1.18);
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
-  background: linear-gradient(180deg, var(--tray-face), var(--tray-face-lo));
+  background: linear-gradient(180deg, var(--face), var(--face-lo));
   box-shadow: var(--shadow-tray-rest);
+  /*
+   * No width here on purpose. This is the rule that applies on the way *out* of
+   * folded, and the pocket is where a flying piece lands: a landing point still
+   * animating is a landing point the flight measures at the wrong size, and a
+   * zero-width one is a flight that never runs at all. So it opens at once, and
+   * the folding away is what is animated — see the folded state below.
+   */
   transition:
+    background var(--dur-phase) var(--ease-out),
     box-shadow var(--dur-phase) var(--ease-out),
-    border-color var(--dur-phase) var(--ease-out),
-    filter var(--dur-phase) var(--ease-out);
-  filter: saturate(0.94) brightness(0.985);
-}
-
-/* Empty, it is the same thing a spent pocket in the pool is — a hole waiting
-   for the piece chosen next — so it is drawn the same way. */
-.tray[data-empty='true'] .tray__shelf {
-  box-shadow: var(--slot-well-shadow);
+    border-color var(--dur-phase) var(--ease-out);
 }
 
 /* Live, exactly as the pool's tray goes live when it is the surface in use. */
 .tray[data-armed='true'] .tray__shelf {
   border-color: var(--hairline-strong);
   box-shadow: var(--shadow-tray);
-  filter: none;
+}
+
+/*
+ * No piece in play, so no pocket. It folds away along the line the piece just
+ * left on, taking its own margin with it, which puts the sentence beside it on
+ * the page's left edge — level with the board and the top bar — for the half of
+ * the turn when there is nothing to point at.
+ */
+.tray[data-collapsed='true'] .tray__shelf {
+  width: 0;
+  border-width: 0;
+  opacity: 0;
+  box-shadow: none;
+  margin-inline-end: 0;
+  transition:
+    width var(--dur-phase) var(--ease-out),
+    margin-inline-end var(--dur-phase) var(--ease-out),
+    opacity var(--dur-phase) var(--ease-out),
+    border-width var(--dur-phase) var(--ease-out);
+}
+
+/* Considering a piece that hands the game over: the pocket is marked in the one
+   colour that never means "go ahead", and the line at the top says why. */
+.tray[data-warn='true'] .tray__shelf {
+  border-color: var(--danger-bright);
+  box-shadow: 0 0 0 1px var(--danger-lift);
 }
 
 .tray__piece {
@@ -323,10 +355,10 @@
 }
 
 /*
- * One heading, used by both halves of the turn. The hand and the pool are the
- * two things a turn is made of, so they are built the same way — a heading that
- * names the surface over the surface itself — and the one that is live wears
- * the accent on its rule.
+ * The pool's heading: what is left, over the surface it is counting. The rule
+ * under it takes the accent when the pool is the surface in use — which is a
+ * property of the surface, not a second sentence. The words for that are at the
+ * top of the screen, said once.
  */
 .section__head {
   display: flex;
@@ -339,24 +371,8 @@
   flex-shrink: 0;
 }
 
-.rail-section[data-armed='true'] .section__head,
-.tray[data-armed='true'] .section__head {
+.rail-section[data-armed='true'] .section__head {
   border-bottom-color: var(--accent);
-}
-
-/* Considering a piece that hands the game over: the one colour that never
-   means "go ahead". */
-.tray[data-warn='true'] .section__head {
-  border-bottom-color: var(--danger-bright);
-}
-
-.tray__warn {
-  color: var(--danger);
-  text-align: right;
-}
-
-.section__count {
-  color: var(--ink-2);
 }
 
 /*
@@ -367,6 +383,8 @@
  * thing you watch rather than a label you read.
  */
 .pool {
+  --face: var(--tray-face-rest);
+  --face-lo: var(--tray-face-lo-rest);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
@@ -377,19 +395,24 @@
   overflow: hidden;
   min-height: 0;
   box-shadow: var(--shadow-tray-rest);
-  transition:
-    box-shadow var(--dur-phase) var(--ease-out),
-    border-color var(--dur-phase) var(--ease-out),
-    filter var(--dur-phase) var(--ease-out);
   /* Light, never position: the slots must not move between the two halves of
      a turn, because that is exactly when a player is reaching for one. */
-  filter: saturate(0.94) brightness(0.985);
+  transition:
+    box-shadow var(--dur-phase) var(--ease-out),
+    border-color var(--dur-phase) var(--ease-out);
 }
 
+/*
+ * Picked up. It used to be a two per cent change of brightness over the whole
+ * tray — under the threshold at which anyone sees it, and paid for by the
+ * pieces, which went slightly grey along with the cloth they stand on. Now the
+ * cloth lightens and lifts and the pieces do not move at all.
+ */
 .pool[data-active='true'] {
+  --face: var(--tray-face);
+  --face-lo: var(--tray-face-lo);
   border-color: var(--hairline-strong);
   box-shadow: var(--shadow-tray);
-  filter: none;
 }
 
 /* Tapping a piece while the board is the live surface. */
@@ -413,10 +436,10 @@
 .slot {
   position: relative;
   aspect-ratio: 1;
-  background: linear-gradient(180deg, var(--tray-face), var(--tray-face-lo));
+  background: linear-gradient(180deg, var(--face), var(--face-lo));
   cursor: default;
   transition:
-    background var(--dur-fast) var(--ease-out),
+    background var(--dur-phase) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
 }
 
@@ -445,7 +468,7 @@
 }
 
 .slot[data-state='spent'] {
-  background: linear-gradient(180deg, var(--tray-face-lo), var(--tray-face-lo));
+  background: var(--face-lo);
 }
 
 .slot[data-state='spent'] .slot__well {
@@ -470,13 +493,10 @@
 
 /*
  * Waiting rather than dormant. Tone is one of the four attributes you have to
- * read to plan a move, so the pieces keep very nearly all their contrast even
- * when it is not your moment to choose; the invitation is carried by the tray
- * coming forward, not by the pieces going grey.
+ * read to plan a move, so the pieces keep all of their contrast when it is not
+ * your moment to choose — the whole invitation is carried by the cloth under
+ * them coming forward, and none of it by the pieces going grey.
  */
-.pool:not([data-active='true']) .slot__piece {
-  opacity: 0.88;
-}
 
 .pool[data-active='true'] .slot[data-state='available']:hover,
 .pool[data-active='true'] .slot[data-state='available']:focus-visible {
@@ -623,7 +643,9 @@
      * within reach of a thumb.
      */
     align-content: stretch;
-    gap: var(--s-3) var(--s-4);
+    /* No column gap: the band's own gap is carried by the pocket (below), so
+       that it goes when the pocket goes. */
+    gap: var(--s-3) 0;
   }
 
   /* No piece is in play once the game is over, so the band's first column has
@@ -681,47 +703,55 @@
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 
+  /*
+   * The height a phone has left over cannot become more board — the board is
+   * as wide as the screen allows and square — so it becomes margin, and the
+   * margin is not shared out evenly. Two identical holes above and below read
+   * as an accident; one deep one under the statement and one shallow one over
+   * the pool reads as a composition, gives the sentence the top of the screen,
+   * and drops the board and the tray — the two things a turn is made of —
+   * into the same reach.
+   */
   .stage__board {
     align-items: center;
+    /* Scaled so that a short screen, which has barely any slack to bias, is
+       barely biased. */
+    padding-top: clamp(0px, calc(11vh - 50px), 68px);
   }
 
   /*
-   * Just the pocket. The status line beside it already names the player whose
-   * piece it is, so the heading over it repeated that in different words; what
-   * the pool needs a header row for — a count, and a wide grid of similar
-   * tiles to introduce — the hand does not, being one object.
+   * Just the pocket, and the sentence beside it. What makes the pocket and the
+   * pool a pair is their material, the accent they take in turn, and their
+   * place at the two ends of the turn — not identical geometry, and no longer a
+   * heading each.
    *
-   * What makes the two sections a pair is the pocket's material, the accent
-   * they take in turn, and their place at the two ends of the turn — not
-   * identical geometry.
+   * The band's own column gap lives on the pocket rather than on the grid, so
+   * that when the pocket folds away the gap goes with it and the sentence lands
+   * on the page's left edge instead of eighty pixels inside it.
    */
   .tray {
     --tray-piece-w: 56px;
     gap: 0;
   }
 
-  /* Kept for the one thing it still carries — the warning on a previewed
-     piece — which only a pointing device can raise, and which then sits under
-     the pocket rather than over it. */
-  .tray .section__head {
-    order: 2;
-    padding-top: var(--s-1);
-    padding-bottom: 0;
-    border-bottom: none;
+  .tray__shelf {
+    margin-inline-end: var(--s-4);
   }
 
-  .tray .section__head .state-label:not(.tray__warn) {
-    display: none;
-  }
-
-  /* Height past this point buys nothing: the piece is limited by the column
-     width, not by how tall its cell is. */
+  /*
+   * Taller than it is wide, and taller than it was. Eight across is fixed by
+   * the width of a phone, so height is the only way the pieces get bigger —
+   * and this is the smallest the sixteen pieces are drawn anywhere in the
+   * game, in the one place where all four of their attributes have to be read
+   * to plan a move. It stops where the glyph becomes limited by the column
+   * instead, which is what the old ratio had already assumed.
+   */
   .slot {
-    aspect-ratio: 0.84;
+    aspect-ratio: 0.72;
   }
 
   .slot__piece {
-    inset: 9% 3% 5%;
+    inset: 8% 3% 5%;
   }
 
   .result {
@@ -786,8 +816,8 @@
     min-height: 0;
   }
 
-  /* Upright again, because a column has height and no width to spare: the
-     heading sits over the pocket here, as it does on a desktop. */
+  /* A column of its own between the two grids, so the pocket is a real object
+     here rather than a chip in a band. */
   .tray {
     --tray-piece-w: 56px;
     display: flex;
@@ -796,11 +826,7 @@
     width: 100%;
   }
 
-  .tray .section__head {
-    padding-bottom: 5px;
-  }
-
-  .tray .state-label {
+  .state-label {
     font-size: 10px;
     letter-spacing: 0.08em;
   }
@@ -907,9 +933,25 @@
   }
 }
 
+/*
+ * The narrowest phones, where the slot is as wide as it is ever going to be.
+ * Eight columns across 360px cannot reach 48px however the margins are spent —
+ * the arithmetic simply does not allow it — so the last four pixels are taken
+ * back from the bezel and the rest of the target is bought in height, where
+ * there is room.
+ */
+@media (max-width: 400px) {
+  .pool {
+    margin-inline: calc(-1 * var(--gutter));
+  }
+}
+
 @media (max-width: 400px) {
   .stage {
-    gap: 10px;
+    /* Rows only. A column gap here would put the sentence ten pixels off the
+       page's left edge for the half of the turn when the pocket is folded
+       away, which is the half where it is meant to line up with the board. */
+    gap: 10px 0;
   }
 
   .status__line {

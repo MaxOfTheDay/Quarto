@@ -502,14 +502,7 @@ export function App() {
         ? { actor: names[state.outcome.player], action: 'wins' }
         : { actor: 'Draw', action: '' }
     }
-    /*
-     * Whose turn it is, and nothing else. What to do, and where, is said by the
-     * accent, which moves between the pocket and the pool's heading — so
-     * spelling it out here as well said the same thing twice within fifty
-     * pixels. A second line naming the other half of the turn used to appear in
-     * a player's very first game and then never again, which made their first
-     * game a different shape from every game after it.
-     */
+    // Who. What they must do is the line underneath, which never moves.
     if (isAiTurn) {
       return { actor: names[state.turn], action: thinking ? 'is thinking' : 'is playing' }
     }
@@ -518,12 +511,49 @@ export function App() {
       : { actor: `${names[state.turn]}’s turn`, action: '' }
   }, [state.outcome, state.turn, isAiTurn, thinking, names, session])
 
+  /** The other player, as they are named inside a sentence about them. */
+  const opponentName =
+    session?.mode === 'computer' && session.human !== opponent ? 'the computer' : names[opponent]
+
   /*
-   * Said every time, not for the first three taps of a session. The surfaces
-   * already flash whenever one is acted on out of turn, and that flash went on
-   * happening long after the words explaining it had stopped — a signal with
-   * its own explanation withdrawn. The count was not even stored, so a reload
-   * quietly granted three more.
+   * The other half of the statement: what the player is to do, in the accent,
+   * in the same place every turn.
+   *
+   * This line was here once and was taken out, for two reasons that were both
+   * true. It said what the accent was already saying — and it was shown in a
+   * player's first game only, so their first game was a different shape from
+   * every game after it.
+   *
+   * What has changed is that the accent now means one thing. It marks the
+   * surface to act on and nothing else, so the words and the light are two
+   * halves of one signal rather than two signals saying the same thing; and the
+   * line is here every turn of every game, so there is no first-game shape to
+   * differ from. It also carries the one rule the screen has never stated
+   * anywhere: the piece you pick is for the other player, by name.
+   *
+   * Empty while the move is not yours. Nothing is expected of you, and a line
+   * that says so is a line that has to be read to find that out.
+   */
+  const direction = useMemo(() => {
+    if (state.outcome || !localTurn) return ''
+    return phase === 'place' ? 'Place this piece' : `Choose a piece for ${opponentName}`
+  }, [state.outcome, localTurn, phase, opponentName])
+
+  /*
+   * The one thing the drawing cannot say, in the line that exists to say what
+   * happens next — because that is exactly what this is. It used to live over
+   * the pocket, where a phone gives it a column eighty pixels wide. Three
+   * sentences can want this slot; they are told apart by their colour, and the
+   * only one that is not the accent is this one.
+   */
+  const warning = preview !== null && hotPieces.includes(preview) ? 'Wins for your opponent' : ''
+
+  /*
+   * Answering a tap on the wrong surface, in the line that is already saying
+   * what to do — the same sentence, put more firmly, while the surface that is
+   * actually live flashes. Said every time rather than for the first three taps
+   * of a session: the flash goes on happening for the whole game, and a signal
+   * whose explanation has been withdrawn is worse than no signal.
    */
   const nudge =
     refused
@@ -561,12 +591,6 @@ export function App() {
       ? 'Undo choice'
       : 'Undo placement'
 
-  const trayLabel = choosing
-    ? `For ${names[opponent]}`
-    : session?.human === state.turn
-      ? 'You place'
-      : `${names[state.turn]} places`
-
   return (
     <div className="app">
       <PieceDefs />
@@ -578,6 +602,37 @@ export function App() {
             {modeLabel && <span className="topbar__mode">{modeLabel}</span>}
           </div>
           <div className="topbar__right">
+            {/*
+              * Undo is app chrome, not turn state. Beside the status line it
+              * was the only button in the game area and the only thing there
+              * that looked pressable, next to the one line that most needed
+              * reading; and being the rare, deliberate act it is, out of a
+              * thumb's easy reach is where it belongs.
+              */}
+            {!showSetup && (
+              <button
+                type="button"
+                className="btn btn--quiet undo"
+                onClick={undo}
+                disabled={!canUndo}
+                title={
+                  canUndo
+                    ? phase === 'place'
+                      ? 'Undo the last choice'
+                      : 'Undo the last placement'
+                    : undefined
+                }
+                /* Both labels are in the DOM and one of them is hidden, so the
+                   accessible name is spelled out rather than left to whichever
+                   the viewport happens to show. */
+                aria-label={undoLabel}
+              >
+                <span className="undo__wide">{undoLabel}</span>
+                {/* A label that changes width every half turn does not fit in a
+                    phone's top bar beside the wordmark. */}
+                <span className="undo__narrow">Undo</span>
+              </button>
+            )}
             {updateReady && !showSetup && (
               <button type="button" className="btn btn--quiet topbar__update" onClick={update}>
                 Restart to update
@@ -611,40 +666,27 @@ export function App() {
           data-refuse={refused ? 'true' : undefined}
           data-phase={state.outcome ? 'over' : choosing ? 'select' : 'place'}
         >
+          {/*
+            * Who, and what they are to do — one statement, with the piece in
+            * play beside it. The pocket is the other half of the sentence
+            * "place this piece", which is why the two sit together and why the
+            * pocket is not drawn at all when there is no piece to point at.
+            */}
           <div className="stage__status">
-            <p
-              className="status"
-              data-live={localTurn ? 'true' : undefined}
-              data-outcome={state.outcome ? 'true' : undefined}
-            >
+            <p className="status" data-outcome={state.outcome ? 'true' : undefined}>
               <span className="status__line">
                 <span className="status__actor">{status.actor}</span>
                 {status.action && <span className="status__action">{status.action}</span>}
                 {isAiTurn && thinking && <span className="status__thinking" aria-hidden="true" />}
               </span>
-              <span className="status__next" data-nudge={nudge ? 'true' : undefined}>
-                {nudge}
+              <span
+                className="status__next"
+                data-nudge={nudge ? 'true' : undefined}
+                data-warn={!nudge && warning ? 'true' : undefined}
+              >
+                {nudge || warning || direction}
               </span>
             </p>
-
-            <button
-              type="button"
-              className="btn btn--quiet undo"
-              onClick={undo}
-              disabled={!canUndo}
-              title={
-                canUndo ? (phase === 'place' ? 'Undo the last choice' : 'Undo the last placement') : undefined
-              }
-              /* Both labels are in the DOM and one of them is hidden, so the
-                 accessible name is spelled out rather than left to whichever
-                 the viewport happens to show. */
-              aria-label={undoLabel}
-            >
-              <span className="undo__wide">{undoLabel}</span>
-              {/* Beside the pocket on a phone there is no room for a label that
-                  also changes width every half turn. */}
-              <span className="undo__narrow">Undo</span>
-            </button>
           </div>
 
           <div className="stage__board">
@@ -667,17 +709,14 @@ export function App() {
                   ref={trayRef}
                   piece={state.hand}
                   preview={localTurn && choosing ? preview : null}
-                  label={trayLabel}
-                  /* The label already says who is choosing; the shelf says what
-                     it is for, which is the half of the turn people forget. */
                   description={
                     choosing
-                      ? `Empty. The piece chosen now goes to ${names[opponent]}.`
+                      ? `No piece in play. The piece chosen now goes to ${names[opponent]}.`
                       : `In play: the ${describePiece(state.hand!)} piece, for ${names[state.turn]} to place`
                   }
                   hidden={trayHidden}
                   armed={localTurn && phase === 'place'}
-                  warn={preview !== null && hotPieces.includes(preview)}
+                  warn={warning !== ''}
                 />
               </div>
             )}
@@ -695,14 +734,16 @@ export function App() {
                   className="rail-section"
                   data-armed={localTurn && choosing ? 'true' : undefined}
                 >
+                  {/*
+                    * The count, and only the count. The heading used to swap to
+                    * "Choose one" and take the accent, which said in words at
+                    * the bottom of the screen what the line at the top now says
+                    * — and it said it with the number stranded three hundred
+                    * pixels away at the other end of the rule. Which surface is
+                    * live stays the accent's job, on the rule under this.
+                    */}
                   <div className="section__head">
-                    <p
-                      className="state-label"
-                      data-accent={localTurn && choosing ? 'true' : undefined}
-                    >
-                      {localTurn && choosing ? 'Choose one' : 'Remaining'}
-                    </p>
-                    <p className="state-label section__count">{state.pool.length}</p>
+                    <p className="state-label">{state.pool.length} left</p>
                   </div>
                   <Pool
                     pool={state.pool}

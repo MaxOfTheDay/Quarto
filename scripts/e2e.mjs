@@ -692,14 +692,12 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
     return {
       sameRow: Math.abs(mid(shelf) - mid(status)) < 12,
       beside: shelf.getBoundingClientRect().right <= status.getBoundingClientRect().left,
-      headingHidden: getComputedStyle(
-        document.querySelector('.tray .section__head .state-label'),
-      ).display === 'none',
+      heading: !!document.querySelector('.tray .section__head'),
       rules,
     }
   })
   check('the pocket and the turn line share one row', band.sameRow && band.beside, JSON.stringify(band))
-  check('the pocket carries no heading of its own upright', band.headingHidden)
+  check('the pocket carries no heading of its own', !band.heading)
   check('one hairline above the board, not three', band.rules.length === 1, band.rules.join(', '))
 
   // A spent pocket is a hole the whole slot deep. A disc inside it is
@@ -714,6 +712,99 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
     return { fills: w.width >= s.width - 1 && w.height >= s.height - 1, round: getComputedStyle(slot.querySelector('.slot__well')).borderRadius }
   })
   check('a spent pocket is a recess, not a disc', spent !== null && spent.fills, JSON.stringify(spent))
+  await ctx.close()
+}
+
+/*
+ * One sentence, one lit surface.
+ *
+ * The turn used to be told apart by a four per cent change in the board's
+ * brightness and the colour of a twelve-point label at the bottom of the
+ * screen; the largest text on the screen said the same words in both halves,
+ * and the rule that makes Quarto Quarto — that the piece you pick is for the
+ * other player — was never stated on this screen at all. The line under the
+ * actor now says what to do, every turn, and names who the piece is for.
+ */
+{
+  const { p, ctx } = await open(390, 844)
+  await begin(p)
+  const read = () => p.evaluate(() => ({
+    line1: document.querySelector('.status__line').innerText.trim(),
+    line2: document.querySelector('.status__next').innerText.trim(),
+    accent: getComputedStyle(document.querySelector('.status__next')).color,
+    pocket: Math.round(document.querySelector('.tray__shelf').getBoundingClientRect().width),
+    statusLeft: Math.round(document.querySelector('.status').getBoundingClientRect().left),
+    pageLeft: Math.round(document.querySelector('.topbar').getBoundingClientRect().left),
+  }))
+
+  const choosing = await read()
+  check('choosing says what to do, and who for', /^Choose a piece for \S/.test(choosing.line2), choosing.line2)
+  check('no piece in play means no pocket drawn', choosing.pocket === 0, `${choosing.pocket}px`)
+  check(
+    'with the pocket gone the sentence is on the page edge',
+    choosing.statusLeft === choosing.pageLeft,
+    `${choosing.statusLeft} vs ${choosing.pageLeft}`,
+  )
+
+  await p.locator('[data-piece="3"]').click()
+  await p.waitForTimeout(900)
+  const placing = await read()
+  check('placing says what to do', placing.line2 === 'Place this piece', placing.line2)
+  check('a piece in play brings the pocket back', placing.pocket > 0, `${placing.pocket}px`)
+  check('the two halves do not say the same words', choosing.line2 !== placing.line2)
+  check('the sentence is the accent in both halves', choosing.accent === placing.accent)
+
+  // Undo is app chrome. Beside the status line it was the only button in the
+  // game area, and the only thing there that looked pressable.
+  const undoPlacement = await p.evaluate(() => ({
+    inBar: !!document.querySelector('.topbar .undo'),
+    inStage: !!document.querySelector('.stage .undo'),
+  }))
+  check('undo lives in the top bar, not the game area', undoPlacement.inBar && !undoPlacement.inStage, JSON.stringify(undoPlacement))
+
+  // One accent, one meaning. The dot before the actor said "it is your move",
+  // which in a two-player game is every turn of every game.
+  const dot = await p.evaluate(() =>
+    getComputedStyle(document.querySelector('.status__actor'), '::before').content)
+  check('no standing accent dot before the actor', dot === 'none', dot)
+  await ctx.close()
+}
+
+/*
+ * The board and the pool change places, visibly. Both used to move by a few
+ * per cent of brightness, which is below the threshold at which anyone sees a
+ * change at all.
+ */
+{
+  const { p, ctx } = await open(390, 844)
+  await begin(p)
+  const slab = () => p.evaluate(() => {
+    const s = document.querySelector('.board__slab')
+    const cs = getComputedStyle(s)
+    return { filter: cs.filter, shadow: cs.boxShadow, live: s.dataset.live ?? 'none' }
+  })
+  // Never the slot the pointer is on: hover lightens a slot's face by itself.
+  const face = () => p.evaluate(() =>
+    getComputedStyle(document.querySelector('.slot[data-piece="15"]')).backgroundImage)
+
+  const boardResting = await slab()
+  const poolLive = await face()
+  await p.locator('[data-piece="3"]').click()
+  await p.mouse.move(5, 5)
+  await p.waitForTimeout(900)
+  const boardLive = await slab()
+  const poolResting = await face()
+
+  check('the board is only live in the half it can be used', boardLive.live === 'true' && boardResting.live === 'none')
+  check('the board visibly changes weight between halves', boardLive.filter !== boardResting.filter, boardResting.filter)
+  check('the resting board drops its cast shadow', boardResting.shadow !== boardLive.shadow)
+  check('the pool cloth changes with the turn', poolLive !== poolResting, poolLive)
+
+  // The pieces are not what dims. Tone is one of the four attributes a player
+  // has to read to plan, in the one place they are drawn smallest.
+  const pieceOpacity = await p.evaluate(() =>
+    getComputedStyle(document.querySelector('.slot[data-piece="15"] .slot__piece')).opacity)
+  check('the pieces keep all their contrast while waiting', pieceOpacity === '1', pieceOpacity)
   await ctx.close()
 }
 

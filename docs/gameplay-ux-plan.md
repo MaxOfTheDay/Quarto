@@ -1,6 +1,8 @@
 # Quarto — gameplay screen: UX review and design plan
 
-Review and design planning only. No application code changed.
+Status: **implemented**. This document is the review the change was made from;
+the two places where the review turned out to be wrong are marked
+**[corrected]** below.
 
 Conducted against a production build of `claude/quarto-gameplay-ux-review-lh3xvs`,
 driven in Chromium at 360×640, 390×844, 412×915 and 430×932, in both themes, across
@@ -104,10 +106,11 @@ narrow axis).
 - **The accent dot is a constant, not a signal.** It means "it is your move". In local
   two-player it is on for every turn of every game — zero information for half of all
   sessions.
-- **The accent carries five different meanings.** "Your move" (dot), "error" (nudge),
-  "act here" (target dots, hover ring, pool rule), "this happened" (last-placed rim,
-  in `--accent-warm`), "this won" (win stroke, won socket). No player can be expected
-  to read `#d9663a` against `#a2401f` as a change of meaning.
+- **The accent carries four different meanings.** "Your move" (dot), "error" (nudge),
+  "act here" (target dots, hover ring, pool rule), "this won" (win stroke, won socket).
+  **[corrected]** An earlier draft counted the last-placed rim as a fifth. It is not:
+  it is already drawn in a neutral warm highlight, `rgba(255, 206, 150, 0.34)`, with a
+  comment saying exactly why. Nothing needed to change there.
 - **"REMAINING 13" is split across 342 px.** Label hard left, number hard right. The
   two halves of one fact, as far apart as the layout permits.
 - **Undo is the only button inside the game area,** sits beside the most important
@@ -361,9 +364,9 @@ tray into the thumb's arc.
 - **Keep** the hover/focus accent ring on the socket, the ghost piece under the pointer,
   the drop animation, and the last-placed rim exactly as they are. They are the best
   touch feedback in the product.
-- **The last-placed rim should move out of the warm accent** into a neutral warm
-  highlight, so "this happened" and "act here" cannot be confused. The distinction
-  between `--accent-warm` and `--accent` is not one a player can be asked to read.
+- **The last-placed rim needs no change.** **[corrected]** It is already a neutral warm
+  highlight rather than the accent, so "this happened" and "act here" are already
+  distinct.
 
 ### The gap below the board
 **Reduce it,** and spend the recovered height on the tray (below).
@@ -385,9 +388,13 @@ tray into the thumb's arc.
   spare and the board is width-bound and cannot use them. The pool is where a player
   must read four attributes off a 47 px glyph to plan a move — it is the smallest
   rendering of the pieces in the product and the one that most needs to be bigger.
-  Raising the slots to ~56 × 66 px costs nothing anyone will miss.
-- **Guarantee 48 px on both axes at 360 px width.** Currently 43 × 51 px — under the
-  minimum on the narrow axis, on the most common small phone.
+  Raising the slots costs nothing anyone will miss.
+- **Grow the touch target as far as eight columns allow.** Currently 43 × 51 px — under
+  the minimum on the narrow axis, on the most common small phone. **[corrected]** 48 px
+  of *width* is not reachable there: eight columns across 360 px leaves 43.9 px even at
+  full bleed, and no distribution of margin changes that. The width goes to 44 px (full
+  bleed, clearing the 44 px iOS minimum and missing Android's 48 dp by four), and the
+  rest of the target is bought in height, where there is room.
 - **Keep** the spent-slot well, the edge-to-edge bleed, the eight-column grid on phones,
   and the near-full contrast on waiting pieces. Tone is one of the four attributes; the
   pieces must not go grey when it is not your moment to choose.
@@ -541,12 +548,9 @@ Only the ones that carry meaning.
 5. **Join the pool header into one left-aligned unit** (`13 LEFT`) and stop swapping the
    label.
 6. **Grow the target dots** to ~7 px / 50 %.
-7. **Spend the surplus phone height on the tray**, not the board — slots to ~56 × 66 px,
-   with a 48 px floor on both axes at 360 px width.
+7. **Spend the surplus phone height on the tray**, not the board — taller slots, and
+   full bleed on the narrowest phones.
 8. **Asymmetric vertical rhythm:** more air above the board than below it.
-9. **Move the last-placed rim off the accent family** so "this happened" and "act here"
-   cannot be read for one another.
-
 ### Optional polish
 
 10. The pocket open/close transition.
@@ -614,3 +618,38 @@ accent means one thing everywhere: *act on this now*. Four elements leave the sc
 none arrive, the board becomes the only object that visibly rises and settles, and the
 question "what do I do now?" is answered twice — once in words for the first game, and
 once in light for every game after it.
+
+---
+
+## What shipped
+
+Measured from the build, on the same four viewports as the review.
+
+| | Before | After |
+|---|---|---|
+| Line 2, choose half | *(empty)* | **Choose a piece for Player 2** |
+| Line 2, place half | *(empty)* | **Place this piece** |
+| Line 1, both halves | "Player 2's turn" | unchanged — it says *who*, and only that |
+| Pocket, choose half | drawn empty | not drawn; the sentence takes the page's left edge |
+| Board, resting | `saturate(.9) brightness(.96)` + a shorter shadow | `saturate(.84) brightness(.89)`, no cast shadow |
+| Pool, resting | `brightness(.985)` over cloth *and* pieces | the cloth darkens; the pieces stay at full contrast |
+| Pool header | `REMAINING` ⇄ `CHOOSE ONE`, count 342 px away | `15 LEFT`, one unit, constant |
+| Target dot | 5.3 px @ 42 % | 6.8 px @ 50 % (390 px screen) |
+| Pool slot @ 390 | 47 × 56 px | 48 × 66 px |
+| Pool slot @ 360 | 43 × 51 px | 44 × 61 px |
+| Undo | in the game area | in the top bar |
+| Accent dot before the actor | always on | gone |
+| Vertical rhythm @ 430 | 103 px / 103 px | 134 px / 69 px |
+| Running wordmark | 21 px | 18 px |
+
+The danger warning moved too, which the review did not anticipate: "Wins for your
+opponent" used to sit over the pocket, in a column eighty pixels wide on a phone. It is
+a sentence about what happens next, so it now takes the same slot as the other two —
+told apart by being the one that is not the accent. Three sentences, one place, three
+colours: accent for what to do, accent-in-weight for a tap on the wrong surface, danger
+for a move that loses.
+
+Verified: 24 unit tests, 201 end-to-end checks (15 of them new, asserting the sentence,
+the folded pocket, the page-edge alignment, Undo's home, the absent dot, and that both
+surfaces visibly change weight between halves), across twelve viewports in both themes,
+plus the flight, the win, the draw, the sideways-phone layout and the keyboard path.
