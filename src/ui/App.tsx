@@ -29,8 +29,18 @@ import { RulesSheet } from './RulesSheet'
 import { SettingsSheet } from './SettingsSheet'
 import { Setup } from './Setup'
 
-/** How long a piece takes to cross from the pool to the shelf. */
-const PASS_FLIGHT = 340
+/*
+ * How long a piece takes to cross from the pool to the shelf, and how high it
+ * arcs on the way.
+ *
+ * The arc is the clearest explanation of the split turn anywhere in the game,
+ * so the very first pass of a very first game used to run at 620ms and the
+ * rest at 340. That is one animation per install, seen by nobody who has
+ * played before — and if it is worth watching once it is worth watching every
+ * time. One pace, between the two.
+ */
+const PASS_FLIGHT = 450
+const PASS_LIFT = 36
 
 /**
  * How long the computer pauses before placing.
@@ -44,8 +54,6 @@ const THINK_FLOOR = PASS_FLIGHT + 520
 const PASS_DELAY = 340
 /** How long a nudge on the live surface lasts after a click on the inert one. */
 const REFUSE_MS = 700
-/** How many times a session explains a wrong-surface click before trusting you. */
-const REFUSE_HINTS = 3
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -84,7 +92,6 @@ export function App() {
   const [trayHidden, setTrayHidden] = useState(false)
   const [preview, setPreview] = useState<PieceId | null>(null)
   const [refused, setRefused] = useState(false)
-  const [refusals, setRefusals] = useState(0)
   const { canInstall, updateReady, install, update } = usePwa()
 
   const state = history[history.length - 1]
@@ -226,7 +233,6 @@ export function App() {
     if (!localTurn) return
     window.clearTimeout(refuseTimer.current)
     setRefused(true)
-    setRefusals((n) => n + 1)
     refuseTimer.current = window.setTimeout(() => setRefused(false), REFUSE_MS)
   }, [localTurn])
 
@@ -289,14 +295,6 @@ export function App() {
 
   /* ── Passing a piece across the table ─────────────────────────────────── */
 
-  /*
-   * The arc from the pool to the shelf is the clearest explanation of the split
-   * turn anywhere in the game, and at 340ms a first-time player does not see
-   * it. The very first pass of a very first game gets long enough to watch, and
-   * then never again.
-   */
-  const firstEver = prefs.gamesPlayed === 0 && state.ply === 1
-
   useLayoutEffect(() => {
     const from = pendingPass.current
     pendingPass.current = null
@@ -306,17 +304,13 @@ export function App() {
     // animation cannot finish, it comes back rather than staying blank.
     let live = true
     const show = () => live && setTrayHidden(false)
-    void flyClone(from, trayRef.current, {
-      duration: firstEver ? 620 : PASS_FLIGHT,
-      lift: firstEver ? 44 : 30,
-    }).then(show, show)
+    void flyClone(from, trayRef.current, { duration: PASS_FLIGHT, lift: PASS_LIFT }).then(show, show)
     const failsafe = window.setTimeout(show, 1400)
     return () => {
       live = false
       window.clearTimeout(failsafe)
       setTrayHidden(false)
     }
-    // `firstEver` is derived from the same ply this effect keys on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ply])
 
@@ -356,8 +350,8 @@ export function App() {
     play(state.outcome.kind === 'win' ? 'win' : 'draw')
   }, [state.outcome])
 
-  // A finished game is worth a point and a game played, exactly once — and an
-  // undo out of a finished position takes both back.
+  // A finished game is worth a point, exactly once — and an undo out of a
+  // finished position takes it back.
   useEffect(() => {
     if (!state.outcome || !session) return
     if (scored.current === state) return
@@ -369,9 +363,8 @@ export function App() {
       else tally[2] += 1
       return { ...s, tally }
     })
-    setPrefs({ gamesPlayed: prefs.gamesPlayed + 1 })
     clearSave()
-  }, [state, session, prefs.gamesPlayed, setPrefs])
+  }, [state, session])
 
   /* ── Saving ───────────────────────────────────────────────────────────── */
 
@@ -399,10 +392,9 @@ export function App() {
     plannedGift.current = -1
     scored.current = null
     setThinking(false)
-    setRefusals(0)
     setHistory([createGame(opener)])
     setShowSetup(false)
-    setPrefs({ seenIntro: true, mode })
+    setPrefs({ mode })
     clearSave()
     },
     [prefs, setPrefs],
@@ -498,8 +490,6 @@ export function App() {
 
   const names = session?.names ?? ['Player 1', 'Player 2']
   const opponent = otherPlayer(state.turn)
-  /** Their very first game: the split turn is the one thing still to learn. */
-  const firstGame = prefs.gamesPlayed === 0
 
   /**
    * One line for the whole turn: who is acting, what they must do, and what
@@ -509,36 +499,37 @@ export function App() {
   const status = useMemo(() => {
     if (state.outcome) {
       return state.outcome.kind === 'win'
-        ? { actor: names[state.outcome.player], action: 'wins', next: '' }
-        : { actor: 'Draw', action: '', next: '' }
+        ? { actor: names[state.outcome.player], action: 'wins' }
+        : { actor: 'Draw', action: '' }
     }
     /*
      * Whose turn it is, and nothing else. What to do, and where, is said by the
-     * two section headings below — the one that is live wears the accent — so
+     * accent, which moves between the pocket and the pool's heading — so
      * spelling it out here as well said the same thing twice within fifty
-     * pixels. The line that named the second half of the turn stays for a
-     * player's very first game, where the pattern is the whole thing to learn,
-     * and then the moving accent teaches it on its own.
+     * pixels. A second line naming the other half of the turn used to appear in
+     * a player's very first game and then never again, which made their first
+     * game a different shape from every game after it.
      */
-    const next = firstGame
-      ? phase === 'place'
-        ? `Then choose a piece for ${names[opponent]}.`
-        : `${names[opponent]} places it next.`
-      : ''
     if (isAiTurn) {
-      return { actor: names[state.turn], action: thinking ? 'is thinking' : 'is playing', next: '' }
+      return { actor: names[state.turn], action: thinking ? 'is thinking' : 'is playing' }
     }
     return session?.human === state.turn
-      ? { actor: 'Your turn', action: '', next }
-      : { actor: `${names[state.turn]}’s turn`, action: '', next }
-  }, [state.outcome, state.turn, isAiTurn, thinking, phase, names, opponent, session, firstGame])
+      ? { actor: 'Your turn', action: '' }
+      : { actor: `${names[state.turn]}’s turn`, action: '' }
+  }, [state.outcome, state.turn, isAiTurn, thinking, names, session])
 
-  /** Shown in place of "what happens next" for the first few wrong-surface taps. */
+  /*
+   * Said every time, not for the first three taps of a session. The surfaces
+   * already flash whenever one is acted on out of turn, and that flash went on
+   * happening long after the words explaining it had stopped — a signal with
+   * its own explanation withdrawn. The count was not even stored, so a reload
+   * quietly granted three more.
+   */
   const nudge =
-    refused && refusals <= REFUSE_HINTS
+    refused
       ? phase === 'place'
-        ? 'Place the piece you were handed first.'
-        : 'Choose a piece for your opponent below.'
+        ? 'Place your piece first.'
+        : 'Choose a piece below.'
       : ''
 
   const announcement = useMemo(() => {
@@ -632,7 +623,7 @@ export function App() {
                 {isAiTurn && thinking && <span className="status__thinking" aria-hidden="true" />}
               </span>
               <span className="status__next" data-nudge={nudge ? 'true' : undefined}>
-                {nudge || status.next}
+                {nudge}
               </span>
             </p>
 

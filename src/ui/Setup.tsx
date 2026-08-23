@@ -1,7 +1,6 @@
 import { useId, useRef } from 'react'
 import type { Difficulty } from '../game/ai'
 import type { Mode, Opener, Prefs } from '../lib/prefs'
-import { QuartoDemo } from './RulesSheet'
 
 export interface SetupProps {
   prefs: Prefs
@@ -149,21 +148,12 @@ export function Setup({
         </header>
 
         {/*
-          * One sentence and one picture. The screen used to say the win
-          * condition three times over — a tagline, a numbered rule and the
-          * picture's own caption — and state the split turn twice. The
-          * sentence is the half nobody guesses; the picture is the half no
-          * sentence explains as well.
+          * No primer. One sentence and one picture used to stand here and then
+          * vanish for good the first time Begin was pressed, so the screen a
+          * player learned was not the screen they came back to. Both now live
+          * in How to play, a link away at the foot of this screen, where they
+          * can be read again.
           */}
-        {!prefs.seenIntro && (
-          <section className="primer" aria-label="How Quarto works">
-            <p className="primer__lead">
-              Your opponent picks the piece you place. You pick theirs.
-            </p>
-            <QuartoDemo />
-          </section>
-        )}
-
         {fields}
 
         <footer className="setup__foot">

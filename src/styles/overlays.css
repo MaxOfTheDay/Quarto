@@ -55,64 +55,6 @@
   letter-spacing: 0.004em;
 }
 
-/*
- * The primer teaches the split turn in two lines and the win condition in one
- * picture. The picture is the same one the rules use, because it is the best
- * thing either screen has — four different pieces that share one attribute
- * says more than four decorative ones standing on a rule.
- */
-.primer {
-  margin-bottom: clamp(20px, 3.4vh, var(--s-8));
-  padding-top: var(--s-5);
-  border-block: 1px solid var(--hairline);
-  padding-bottom: var(--s-5);
-}
-
-/* Sized so the whole thought fits one line on a desktop and breaks between
-   its two sentences, not mid-clause, on a phone. */
-.primer__lead {
-  font-size: var(--t-base);
-  line-height: 1.45;
-  color: var(--ink-2);
-  text-align: center;
-  text-wrap: balance;
-}
-
-.primer .demo {
-  margin-top: var(--s-4);
-}
-
-/* ── A game left behind ──────────────────────────────────────────────────── */
-
-/*
- * The answer to "what now?" for anyone coming back, so it goes above the
- * choices rather than below them — and the choices fold away behind a link,
- * because someone resuming a game has already made them.
- */
-.resume {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
-  flex-wrap: wrap;
-  margin-bottom: var(--s-5);
-  padding: var(--s-4) 0;
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.resume__text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.resume__detail {
-  font-size: 14px;
-  color: var(--ink-2);
-}
-
 .setup__more {
   display: flex;
   justify-content: center;
@@ -180,20 +122,12 @@
   .setup__links {
     justify-content: center;
   }
-  .resume {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .resume .btn {
-    width: 100%;
-  }
 }
 
 /*
  * Anything under a full desktop's height gets a tighter rhythm, whatever its
- * width: the first-run screen carries a primer and a picture, and the one thing
- * that matters — Begin, or Resume — has to stay above the fold rather than
- * below it.
+ * width, so the one thing that matters — Begin — stays above the fold rather
+ * than below it.
  */
 @media (max-height: 900px) {
   .setup {
@@ -204,15 +138,6 @@
   }
   .setup__title {
     font-size: clamp(36px, 7vw, 46px);
-  }
-  .primer {
-    padding-top: var(--s-4);
-    padding-bottom: var(--s-4);
-    margin-bottom: var(--s-4);
-  }
-  .primer .demo {
-    margin-top: var(--s-3);
-    padding: 10px 10px 8px;
   }
   .setup__foot {
     margin-top: var(--s-5);
@@ -231,14 +156,6 @@
   .setup__head {
     margin-bottom: var(--s-4);
   }
-  .primer {
-    padding-top: var(--s-4);
-    padding-bottom: var(--s-4);
-    margin-bottom: var(--s-4);
-  }
-  .primer .demo {
-    margin-top: var(--s-3);
-  }
   .setup__fields {
     gap: var(--s-3);
   }
@@ -247,32 +164,16 @@
     padding-top: var(--s-4);
     gap: var(--s-3);
   }
-  .resume {
-    margin-bottom: var(--s-4);
-    padding: var(--s-3) 0;
-  }
 }
 
-/* Smaller again on the shortest phones, where the primer is the difference
-   between reaching the button and hunting for it. */
+/* Smaller again on the shortest phones, so the button is reached rather than
+   hunted for. */
 @media (max-height: 660px) and (max-width: 619px) {
   .setup {
     padding-block: calc(var(--safe-t) + var(--s-4)) calc(var(--safe-b) + var(--s-4));
   }
   .setup__head {
     margin-bottom: var(--s-3);
-  }
-  .primer {
-    padding-top: var(--s-3);
-    padding-bottom: var(--s-3);
-    margin-bottom: var(--s-3);
-  }
-  .primer .demo {
-    margin-top: 10px;
-    padding: 10px 10px 8px;
-  }
-  .primer .demo__note {
-    font-size: 11px;
   }
   .setup__fields {
     gap: 11px;
@@ -284,9 +185,10 @@
 }
 
 /*
- * Sideways: two columns rather than one long scroll. What the game is goes on
- * the left, what you have to decide goes on the right, and the button stays in
- * view.
+ * Sideways: two columns rather than one long scroll. The name of the game goes
+ * on the left, what you have to decide goes on the right, and the button stays
+ * in view. The left column used to carry a primer as well, which only ever
+ * appeared before a player's first game.
  */
 @media (max-height: 560px) and (min-width: 620px) {
   .setup {
@@ -300,11 +202,8 @@
     column-gap: clamp(30px, 5vw, 60px);
     align-items: start;
     grid-template-areas:
-      'head   resume'
-      'head   fields'
-      'primer fields'
-      'primer foot'
-      'primer offline';
+      'head fields'
+      'head foot';
   }
 
   .setup__head {
@@ -315,20 +214,6 @@
 
   .setup__title {
     font-size: clamp(38px, 5.5vw, 50px);
-  }
-
-  .primer {
-    grid-area: primer;
-    margin-bottom: 0;
-    padding-top: var(--s-3);
-    padding-bottom: 0;
-    border-bottom: none;
-  }
-
-  .resume {
-    grid-area: resume;
-    margin-bottom: var(--s-4);
-    padding: var(--s-3) 0;
   }
 
   .setup__more {

@@ -43,7 +43,7 @@ const DEMO = [
   TONE | SHAPE | TOP, // short square hollow
 ]
 
-export function QuartoDemo({ note = 'All four are dark — that is a Quarto.' }: { note?: string }) {
+function QuartoDemo() {
   return (
     <div className="demo" aria-label="Four different pieces that are all dark">
       {DEMO.map((p, i) => (
@@ -51,7 +51,7 @@ export function QuartoDemo({ note = 'All four are dark — that is a Quarto.' }:
           <PieceGlyph piece={p} className="piece" />
         </span>
       ))}
-      <p className="demo__note">{note}</p>
+      <p className="demo__note">All four are dark — that is a Quarto.</p>
     </div>
   )
 }
@@ -62,8 +62,7 @@ export function RulesSheet({ onClose }: RulesSheetProps) {
       <section className="rule">
         <p className="eyebrow">The turn</p>
         <p className="rule__lead">
-          You never choose your own piece. Your opponent chooses it for you, you place it, then you
-          choose theirs.
+          Your opponent picks the piece you place. You pick theirs — you never choose your own.
         </p>
       </section>
 

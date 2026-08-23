@@ -14,7 +14,6 @@ export interface Prefs {
   opener: Opener
   sound: boolean
   reducedEffects: boolean
-  seenIntro: boolean
   theme: Theme
   /**
    * Shows what the engine already knows: where the piece in hand wins, which
@@ -22,8 +21,6 @@ export interface Prefs {
    * over. On unless the player turns it off — see `coachingActive`.
    */
   coach: boolean
-  /** Finished games, used to pace what the first game explains. */
-  gamesPlayed: number
 }
 
 const DEFAULTS: Prefs = {
@@ -32,10 +29,8 @@ const DEFAULTS: Prefs = {
   opener: 'p1',
   sound: true,
   reducedEffects: false,
-  seenIntro: false,
   theme: 'system',
   coach: true,
-  gamesPlayed: 0,
 }
 
 const KEY = 'quarto.prefs.v2'

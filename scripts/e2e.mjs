@@ -198,8 +198,77 @@ async function openMenu(p, name) {
   await p.waitForSelector('.setup__title')
   check('difficulty persists', await p.getByRole('radio', { name: 'Hard', exact: true }).getAttribute('aria-checked') === 'true')
   check('mute persists', (await p.getByRole('button', { name: 'Sound off' }).getAttribute('aria-pressed')) === 'false')
-  check('intro is not shown twice', (await p.locator('.primer').count()) === 0)
   await ctx.close()
+}
+
+/*
+ * The app is the same app on every run.
+ *
+ * Four things used to change on their own once a counter passed: the start
+ * screen dropped its primer, the status dropped the line naming the other half
+ * of the turn, the pool-to-pocket flight sped up, and the answer to a tap on
+ * the wrong surface stopped saying anything. Each was invisible when it
+ * happened and impossible to get back, so the game a player learned was not the
+ * game they came back to. This compares a fresh install against a veteran and
+ * asserts they are indistinguishable.
+ */
+{
+  const snapshot = async (stored) => {
+    const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true })
+    const p = await ctx.newPage()
+    if (stored) await p.addInitScript((v) => localStorage.setItem('quarto.prefs.v2', v), stored)
+    await p.goto(URL, { waitUntil: 'domcontentloaded' })
+    await p.waitForSelector('.setup__title')
+    const setup = await p.evaluate(() => document.querySelector('.setup__inner').innerText)
+
+    await p.getByRole('radio', { name: 'Two players', exact: true }).click()
+    await p.getByRole('button', { name: /^(Begin|Start new game)$/ }).click()
+    await p.waitForSelector('.board__slab')
+    await p.waitForTimeout(300)
+    const choosing = await p.evaluate(() => document.querySelector('.stage__status').innerText)
+
+    // A tap on the board while the pool is the live surface. The answer takes a
+    // line that is always reserved, so saying it must not push the board down.
+    const boardTop = () => p.evaluate(() =>
+      Math.round(document.querySelector('.board__slab').getBoundingClientRect().top))
+    const settled = await boardTop()
+    await p.locator('[data-cell="0"]').tap({ force: true })
+    await p.waitForTimeout(200)
+    const refused = await p.evaluate(() => document.querySelector('.status__next').innerText.trim())
+    const shift = Math.abs((await boardTop()) - settled)
+
+    await p.waitForTimeout(700)
+    await p.locator('[data-piece="3"]').tap()
+    await p.waitForTimeout(900)
+    const placing = await p.evaluate(() => document.querySelector('.stage__status').innerText)
+    await ctx.close()
+    return { setup, choosing, refused, placing, shift }
+  }
+
+  const fresh = await snapshot(null)
+  /*
+   * A player who has finished forty games, on storage written by an older
+   * build. Every stored preference matches the defaults the fresh run starts
+   * from, so the only thing that differs between the two is how far along the
+   * player is — which is the whole point of the comparison.
+   */
+  const veteran = await snapshot(JSON.stringify({
+    mode: 'computer', difficulty: 'medium', opener: 'p1', sound: true, reducedEffects: false,
+    theme: 'system', coach: true, seenIntro: true, coachSet: true, gamesPlayed: 40,
+  }))
+
+  check('the start screen is the same on a first run and a fortieth',
+    fresh.setup === veteran.setup, `${JSON.stringify(fresh.setup)} vs ${JSON.stringify(veteran.setup)}`)
+  check('the turn reads the same while choosing',
+    fresh.choosing === veteran.choosing, `${JSON.stringify(fresh.choosing)} vs ${JSON.stringify(veteran.choosing)}`)
+  check('the turn reads the same while placing',
+    fresh.placing === veteran.placing, `${JSON.stringify(fresh.placing)} vs ${JSON.stringify(veteran.placing)}`)
+  check('a tap on the wrong surface is answered in words',
+    /choose a piece/i.test(fresh.refused), fresh.refused)
+  check('the answer fits without moving the board',
+    fresh.shift === 0, `board moved ${fresh.shift}px`)
+  check('and is answered the same way for a veteran',
+    fresh.refused === veteran.refused, `${JSON.stringify(fresh.refused)} vs ${JSON.stringify(veteran.refused)}`)
 }
 
 // ── A full game against Hard, with the main thread under watch ──────────────
@@ -494,7 +563,7 @@ for (const [width, height] of [[1440, 900], [1024, 768], [834, 1112], [390, 844]
   await p.locator('[data-piece="6"]').click({ force: true })
   await p.waitForTimeout(150)
   const back = await p.locator('.status__next[data-nudge="true"]').textContent().catch(() => null)
-  check('a pool tap while placing says the same', /place the piece/i.test(back ?? ''), String(back))
+  check('a pool tap while placing says the same', /place your piece/i.test(back ?? ''), String(back))
   check('no console errors while refusing', errors.length === 0, errors.join('; '))
   await ctx.close()
 }
